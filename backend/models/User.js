@@ -49,6 +49,7 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  
 }, { timestamps: true });
 
 // Middleware : hacher le mot de passe avant la sauvegarde
