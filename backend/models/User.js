@@ -1,5 +1,6 @@
 // models/User.js
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
   nomComplet: {
@@ -9,23 +10,25 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, "L'email est requis"],
+    required: [true, 'L\'email est requis'],
     unique: true,
     lowercase: true,
-    match: [/\S+@\S+\.\S+/, 'Email invalide'],
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Veuillez fournir un email valide'],
   },
   telephone: {
     type: String,
     required: [true, 'Le téléphone est requis'],
+    trim: true,
   },
   adresse: {
     type: String,
-    required: [true, "L'adresse est requise"],
+    required: [true, 'L\'adresse est requise'],
+    trim: true,
   },
   role: {
     type: String,
-    enum: ['admin', 'livreur'],   // strictement les deux rôles du diagramme
-    default: 'livreur',
+    enum: ['client', 'livreur', 'admin'],
+    default: 'client',
   },
   motDePasse: {
     type: String,
@@ -33,7 +36,6 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false,
   },
-  // Champs spécifiques au Livreur
   status: {
     type: String,
     enum: ['actif', 'inactif', 'suspendu'],
@@ -47,8 +49,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-}, {
-  timestamps: true,
+}, { timestamps: true });
+
+// Middleware : hacher le mot de passe avant la sauvegarde
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('motDePasse')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.motDePasse = await bcrypt.hash(this.motDePasse, salt);
+  next();
 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -1,30 +1,94 @@
 // controllers/livreurController.js
 const User = require('../models/User');
+const crypto = require('crypto');
+const transporter = require('../config/email');
+const { sendWelcomeEmailAsync } = require('../utils/email_send');
+
+
+const generatePassword = (length = 16, options = {}) => {
+  const {
+    uppercase = true,
+    lowercase = true,
+    numbers = true,
+    symbols = true,
+  } = options;
+
+  let charset = '';
+  if (lowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+  if (uppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (numbers)   charset += '0123456789';
+  if (symbols)   charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+  // S'assurer qu'il y a au moins un jeu de caractères
+  if (charset.length === 0) {
+    throw new Error('Au moins un type de caractère doit être autorisé');
+  }
+
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset[crypto.randomInt(0, charset.length)];
+  }
+
+  // Optionnel : garantir qu'au moins un caractère de chaque type demandé est présent
+  // (pour satisfaire les politiques, mais complexifie un peu).
+  // On va plutôt garantir que si un type est demandé, au moins un caractère est inclus.
+  if (lowercase && !/[a-z]/.test(password)) {
+    const pos = crypto.randomInt(0, length);
+    password = password.substring(0, pos) + 
+               'abcdefghijklmnopqrstuvwxyz'[crypto.randomInt(0, 26)] + 
+               password.substring(pos + 1);
+  }
+  if (uppercase && !/[A-Z]/.test(password)) {
+    const pos = crypto.randomInt(0, length);
+    password = password.substring(0, pos) + 
+               'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[crypto.randomInt(0, 26)] + 
+               password.substring(pos + 1);
+  }
+  if (numbers && !/[0-9]/.test(password)) {
+    const pos = crypto.randomInt(0, length);
+    password = password.substring(0, pos) + 
+               '0123456789'[crypto.randomInt(0, 10)] + 
+               password.substring(pos + 1);
+  }
+  if (symbols && !/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+    const pos = crypto.randomInt(0, length);
+    password = password.substring(0, pos) + 
+               '!@#$%^&*()_+-=[]{}|;:,.<>?'[crypto.randomInt(0, 25)] + 
+               password.substring(pos + 1);
+  }
+
+  return password;
+};
 
 // POST /api/livreurs
 const createLivreur = async (req, res) => {
   try {
-    // Extraire les champs nécessaires (on ignore role, status, etc. envoyés par le client)
-    const { nomComplet, email, telephone, adresse, motDePasse } = req.body;
+    const { nomComplet, email, telephone, adresse } = req.body;
 
-    // Créer l'utilisateur avec le rôle forcé à 'livreur' et les valeurs par défaut
-    const livreur = await User.create({
-      nomComplet,
-      email,
-      telephone,
-      adresse,
-      motDePasse,
-      role: 'livreur',           // forcé
-      status: 'actif',           // défaut
-      disponibilite: true,       // défaut
-      nombreLivraison: 0,        // défaut
+    const plainPassword = generatePassword(12, {
+      uppercase: true, lowercase: true, numbers: true, symbols: true
     });
 
-    // Ne pas renvoyer le mot de passe
-    const { motDePasse: _, ...livreurSansMdp } = livreur.toObject();
-    res.status(201).json({ success: true, data: livreurSansMdp });
+    const livreur = await User.create({
+      nomComplet, email, telephone, adresse,
+      motDePasse: plainPassword,
+      role: 'livreur',
+      status: 'actif',
+      disponibilite: true,
+      nombreLivraison: 0,
+    });
+
+    // ✅ REMPLACE tout le bloc try/catch email par ces 2 lignes :
+    const { motDePasse, __v, ...livreurSansMdp } = livreur.toObject(); // ← AJOUT __v
+    res.status(201).json({
+      success: true,
+      data: livreurSansMdp,
+      message: "Livreur créé avec succès. Un email avec les identifiants a été envoyé.",
+    });
+
+    sendWelcomeEmailAsync(transporter, { nomComplet, email, plainPassword }); // ← APRÈS res.json()
+
   } catch (error) {
-    // Gérer l'erreur de duplication email
     if (error.code === 11000) {
       return res.status(400).json({ success: false, error: "Un utilisateur avec cet email existe déjà." });
     }
