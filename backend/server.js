@@ -35,3 +35,7 @@ const startServer = async () => {
 };
 
 startServer();
+
+// chercher les livreurs par nom
+const livreurRoutes = require('./routes/livreurRoutes'); 
+app.use('/api/livreurs', livreurRoutes);
