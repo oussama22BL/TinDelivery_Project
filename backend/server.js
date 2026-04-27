@@ -34,4 +34,6 @@ const startServer = async () => {
   }
 };
 
+
+app.use('/api/livreurs', require('./routes/livreurRoutes'));
 startServer();
