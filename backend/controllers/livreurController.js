@@ -7,7 +7,6 @@ const updateLivreur = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Liste des champs autorisés à être modifiés par l'admin
     const allowedFields = [
       'nomComplet',
       'email',
@@ -17,7 +16,6 @@ const updateLivreur = async (req, res) => {
       'disponibilite',
     ];
 
-    // Filtrer les champs non autorisés
     const filteredUpdates = {};
     for (const key of Object.keys(updates)) {
       if (allowedFields.includes(key)) {
@@ -25,7 +23,20 @@ const updateLivreur = async (req, res) => {
       }
     }
 
-    // Vérifier que le livreur existe et a bien le rôle 'livreur'
+    // Vérifier si l'email est modifié et s'il est déjà utilisé par un autre utilisateur
+    if (filteredUpdates.email) {
+      const existingUser = await User.findOne({
+        email: filteredUpdates.email,
+        _id: { $ne: id }, // exclure l'utilisateur actuel
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          error: 'Cet email est déjà utilisé par un autre utilisateur.',
+        });
+      }
+    }
+
     const livreur = await User.findOneAndUpdate(
       { _id: id, role: 'livreur' },
       filteredUpdates,
@@ -38,10 +49,6 @@ const updateLivreur = async (req, res) => {
 
     res.status(200).json({ success: true, data: livreur });
   } catch (error) {
-    // Gérer l'erreur de duplication d'email (même si on ne le gère pas encore bien)
-    if (error.code === 11000) {
-      return res.status(400).json({ success: false, error: "Cet email est déjà utilisé." });
-    }
     res.status(400).json({ success: false, error: error.message });
   }
 };
