@@ -1,25 +1,83 @@
-// models/Colis.js
 const mongoose = require('mongoose');
 
 const colisSchema = new mongoose.Schema({
   poids: {
     type: Number,
-    required: [true, 'Le poids est requis'],
+    required: true,
     min: 0,
   },
+
   status: {
     type: String,
     enum: ['en attente', 'en cours', 'livré', 'annulé'],
     default: 'en attente',
   },
+
   dateCreation: {
     type: Date,
     default: Date.now,
   },
+
   dateLivraison: {
     type: Date,
-    // non obligatoire à la création
   },
+codeSuivi: {
+  type: String,
+  unique: true,
+  sparse: true
+},
+  // Expéditeur
+  expediteurNomComplet: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  expediteurTelephone: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  expediteurEmail: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+  },
+
+  expediteurAdresse: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  // Destinataire
+  destinataireNomComplet: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  destinataireTelephone: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  destinataireEmail: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+  },
+
+  destinataireAdresse: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
 }, {
   timestamps: true,
 });
