@@ -6,7 +6,8 @@ const connectDB = require('./config/db');
 const app = express();
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
-
+// Import routes
+const colisRoutes = require('./routes/colisRoutes');
 
 // Middleware
 app.use(cors());
@@ -16,6 +17,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('API Gestion de Location fonctionne correctement.');
 });
+// Routes API
+app.use('/api/colis', colisRoutes);
 
 // Fonction d'initialisation du serveur
 const startServer = async () => {
