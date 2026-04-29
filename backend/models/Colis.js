@@ -23,8 +23,8 @@ const colisSchema = new mongoose.Schema({
   },
 codeSuivi: {
   type: String,
-  unique: true,
   required: true,
+  unique: true,
 },
   // Expéditeur
   expediteurNomComplet: {
