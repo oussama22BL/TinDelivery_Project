@@ -24,7 +24,7 @@ const colisSchema = new mongoose.Schema({
 codeSuivi: {
   type: String,
   unique: true,
-  sparse: true
+  required: true,
 },
   // Expéditeur
   expediteurNomComplet: {
