@@ -7,6 +7,11 @@ const Colis = require('../models/Colis');
  * @access  Admin
  */
 
+const generateTrackingCode = () => {
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  return `TD-${date}-${random}`;
+};
 
 const createColis = async (req, res) => {
   try {
@@ -57,9 +62,9 @@ const createColis = async (req, res) => {
         errors: [{ champ: "poids", message: "Le poids doit être supérieur à 0." }],
       });
     }
-
-
+    const codeSuivi = generateTrackingCode();
     const colis = await Colis.create({
+      codeSuivi,
       poids,
       expediteurNomComplet,
       expediteurTelephone,
@@ -74,6 +79,8 @@ const createColis = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Colis créé avec succès.",
+      //codeSuivi,
+
       data: colis,
       
     });
