@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
 const colisRoutes = require('./routes/colisRoutes');
+
 const app = express();
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
