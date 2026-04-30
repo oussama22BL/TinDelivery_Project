@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
-
+const colisRoutes = require('./routes/colisRoutes');
 const app = express();
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
@@ -11,6 +11,8 @@ dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/colis', colisRoutes);
+
 
 // Route de test
 app.get('/', (req, res) => {
