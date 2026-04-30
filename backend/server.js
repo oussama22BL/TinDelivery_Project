@@ -1,11 +1,5 @@
 /**
- * Serveur backend TinDelivery
- * API REST pour la gestion des livraisons
- * 
- * Variables d'environnement requises:
- *   - MONGO_URL: URL de connexion MongoDB
- *   - PORT: Port du serveur (défaut: 5000)
- *   - EMAIL_*: Configuration email (voir config/email.js)
+ * Serveur backend TinDelivery - VERSION NETTOYÉE
  */
 
 const express = require('express');
@@ -15,7 +9,7 @@ const connectDB = require('./config/db');
 
 const app = express();
 
-// Configuration DNS (améliore la résolution sur certains systèmes)
+// Configuration DNS (optionnel)
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
@@ -28,20 +22,14 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
   res.status(200).json({
     message: '🚀 API TinDelivery fonctionne correctement.',
-    version: '1.0.0',
-    endpoints: {
-      livreurs: '/api/livreurs',
-    },
+    version: '1.0.0'
   });
 });
 
-// ============ HEALTH CHECK ============
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
 // ============ API ROUTES ============
-app.use('/api/livreurs', require('./routes/livreurRoutes'));
+// On importe et on utilise les routes une seule fois
+const livreurRoutes = require('./routes/livreurRoutes');
+app.use('/api/livreurs', livreurRoutes);
 
 // ============ GESTION DES ERREURS 404 ============
 app.use((req, res) => {
@@ -53,9 +41,6 @@ app.use((req, res) => {
 });
 
 // ============ FONCTION DE DÉMARRAGE ============
-/**
- * Démarre le serveur Express et se connecte à la base de données
- */
 const startServer = async () => {
   try {
     // Connexion à la base de données
@@ -65,7 +50,6 @@ const startServer = async () => {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`✅ Serveur en cours d'exécution sur le port ${PORT}`);
-      console.log(`📝 Voir la documentation: http://localhost:${PORT}/`);
     });
   } catch (error) {
     console.error('❌ Erreur lors du démarrage du serveur :', error.message);
@@ -73,13 +57,5 @@ const startServer = async () => {
   }
 };
 
-// Démarrer le serveur
-startServer();
-startServer();
-
-// chercher les livreurs par nom
-const livreurRoutes = require('./routes/livreurRoutes'); 
-app.use('/api/livreurs', livreurRoutes);
-
-
+// ON APPELLE LA FONCTION UNE SEULE FOIS
 startServer();

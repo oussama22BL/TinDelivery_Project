@@ -10,6 +10,7 @@ const router = express.Router();
 const { createLivreur, getAllLivreurs } = require('../controllers/livreurController');
 const { searchLivreursByNom, getLivreursByDisponibilite} = require('../controllers/livreurController');
 const { deleteLivreur } = require('../controllers/livreurController');
+const { updateLivreur } = require('../controllers/livreurController');
 
 
 /**
@@ -39,5 +40,8 @@ router.get('/not-available', getLivreursByDisponibilite(false));
 
 // DELETE /api/livreurs/:id
 router.delete('/:id', deleteLivreur);
+
+// Route pour mettre à jour les informations d'un livreur (accessible uniquement par l'admin)
+router.put('/:id', updateLivreur);
 
 module.exports = router;
