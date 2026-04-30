@@ -158,8 +158,76 @@ const getAllColis = async (req, res) => {
     });
   }
 };
+const updateColis = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    // 1. Vérifier ID valide
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID du colis requis"
+      });
+    }
+
+    // 2. Trouver le colis
+    const colis = await Colis.findById(id);
+
+    if (!colis) {
+      return res.status(404).json({
+        success: false,
+        message: "Colis introuvable"
+      });
+    }
+
+    // 3. Liste des champs autorisés
+    const allowedFields = [
+      "poids",
+      "expediteurNomComplet",
+      "expediteurTelephone",
+      "expediteurEmail",
+      "expediteurAdresse",
+      "destinataireNomComplet",
+      "destinataireTelephone",
+      "destinataireEmail",
+      "destinataireAdresse"
+    ];
+
+    // 4. Mise à jour contrôlée
+    Object.keys(req.body).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        colis[key] = req.body[key];
+      }
+    });
+
+    // 5. Validation métier
+    if (colis.poids !== undefined && Number(colis.poids) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Le poids doit être supérieur à 0"
+      });
+    }
+
+    // 6. Sauvegarde
+    await colis.save();
+
+    // 7. Réponse propre
+    return res.status(200).json({
+      success: true,
+      message: "Colis modifié avec succès",
+      data: colis
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la modification",
+      ...(process.env.NODE_ENV === "development" && { error: error.message })
+    });
+  }
+};
 module.exports = {
   createColis,
   getAllColis,
+  updateColis
 };
