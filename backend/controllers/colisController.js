@@ -226,8 +226,47 @@ const updateColis = async (req, res) => {
     });
   }
 };
+const deleteColis = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Vérifier ID
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "ID du colis requis"
+      });
+    }
+
+    // 2. SUPPRESSION DIRECTE (PROPRE)
+    const deleted = await Colis.findByIdAndDelete(id);
+
+    // 3. Si rien trouvé
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Colis introuvable"
+      });
+    }
+
+    // 4. Réponse OK
+    return res.status(200).json({
+      success: true,
+      message: "Colis supprimé avec succès",
+      deletedId: id
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la suppression",
+      error: error.message
+    });
+  }
+};
 module.exports = {
   createColis,
   getAllColis,
-  updateColis
+  updateColis,
+  deleteColis
 };
