@@ -9,6 +9,8 @@ const express = require('express');
 const router = express.Router();
 const { createLivreur, getAllLivreurs } = require('../controllers/livreurController');
 const { searchLivreursByNom, getLivreursByDisponibilite} = require('../controllers/livreurController');
+const { deleteLivreur } = require('../controllers/livreurController');
+
 
 /**
  * POST /api/livreurs
@@ -33,5 +35,9 @@ router.get('/available', getLivreursByDisponibilite(true));
 
 // GET /api/livreurs/not-available
 router.get('/not-available', getLivreursByDisponibilite(false));
+
+
+// DELETE /api/livreurs/:id
+router.delete('/:id', deleteLivreur);
 
 module.exports = router;
