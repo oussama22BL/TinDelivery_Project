@@ -9,11 +9,18 @@ const GererLivreurs = () => {
     const [showForm, setShowForm] = useState(false);
 
     const refreshList = async () => {
-        try {
-            const res = await axios.get('/api/livreurs');
-            setLivreurs(res.data);
-        } catch (err) { console.error(err); }
-    };
+    try {
+        const res = await axios.get('/api/livreurs');
+        
+        // AVANT : setLivreurs(res.data); <-- C'était l'erreur
+        // MAINTENANT : On prend le tableau qui est dans res.data.data
+        if (res.data && res.data.data) {
+            setLivreurs(res.data.data); 
+        }
+    } catch (err) { 
+        console.error("Erreur de chargement :", err); 
+    }
+};
 
     useEffect(() => { refreshList(); }, []);
 
@@ -38,13 +45,25 @@ const GererLivreurs = () => {
                     </button>
                 </header>
 
-                {/* Cartes de statistiques (Maquette) */}
-                <div className="grid grid-cols-4 gap-6 mb-10">
-                    <StatCard label="Total Livreurs" value={livreurs.length} />
-                    <StatCard label="En Service" value="28" color="text-cyan-600" />
-                    <StatCard label="Disponibles" value="15" color="text-cyan-600" />
-                    <StatCard label="Inactifs" value="4" color="text-red-500" />
-                </div>
+
+                    <div className="grid grid-cols-4 gap-6 mb-10">
+                        <StatCard label="Total Livreurs" value={livreurs.length} />
+                        <StatCard 
+                            label="En Service" 
+                            value={livreurs.filter(l => l.status === 'actif').length} 
+                            color="text-cyan-600" 
+                        />
+                        <StatCard 
+                            label="Disponibles" 
+                            value={livreurs.filter(l => l.disponibilite === true).length} 
+                            color="text-cyan-600" 
+                        />
+                        <StatCard 
+                            label="Inactifs" 
+                            value={livreurs.filter(l => l.status === 'inactif').length} 
+                            color="text-red-500" 
+                        />
+                    </div>
 
                 {showForm && (
                     <div className="mb-10 animate-in slide-in-from-top duration-300">

@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { createLivreur, getAllLivreurs } = require('../controllers/livreurController');
+const { searchLivreursByNom, getLivreursByDisponibilite} = require('../controllers/livreurController');
 
 /**
  * POST /api/livreurs
@@ -21,10 +22,6 @@ router.post('/', createLivreur);
  * Récupère la liste de tous les livreurs
  */
 router.get('/', getAllLivreurs);
-// routes/livreurRoutes.js
-const express = require('express');
-const router = express.Router();
-const { searchLivreursByNom, getLivreursByDisponibilite} = require('../controllers/livreurController');
 
 
 
