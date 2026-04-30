@@ -34,11 +34,19 @@ const LivreurTable = ({ livreurs, refreshList, onEdit }) => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Supprimer ce livreur ?")) {
-            await axios.delete(`/api/livreurs/${id}`);
-            refreshList();
+    // Fenêtre de confirmation
+        if (window.confirm("⚠️ Êtes-vous sûr de vouloir supprimer définitivement ce livreur ?")) {
+            try {
+                // APPEL API DELETE
+                await axios.delete(`/api/livreurs/${id}`);
+                alert("Livreur supprimé avec succès");
+                refreshList(); // Rafraîchit le tableau
+            } catch (err) {
+                console.error("Erreur suppression:", err.response?.data);
+                alert(err.response?.data?.error || "Erreur lors de la suppression");
+            }
         }
-    };
+   };
 
     return (
         <div className="overflow-x-auto">

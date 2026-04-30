@@ -18,17 +18,22 @@ const LivreurForm = ({ refreshList, editingLivreur, setEditingLivreur, setShowFo
         e.preventDefault();
         try {
             if (editingLivreur) {
-                await axios.put(`/api/livreurs/${editingLivreur._id}`, formData);
+                // --- APPEL API PUT (MODIFICATION) ---
+                const res = await axios.put(`/api/livreurs/${editingLivreur._id}`, formData);
+                alert("Informations mises à jour avec succès !");
             } else {
+                // --- APPEL API POST (CRÉATION) ---
                 await axios.post('/api/livreurs', formData);
+                alert("Nouveau livreur créé !");
             }
+            
+            // On réinitialise tout
             setEditingLivreur(null);
             setShowForm(false);
             refreshList();
-            alert("Opération réussie !");
-        } catch (err) { 
-            // On affiche l'erreur précise du backend s'il y en a une
-            alert(err.response?.data?.error || "Erreur lors de l'enregistrement"); 
+        } catch (err) {
+            console.error("Erreur formulaire:", err.response?.data);
+            alert(err.response?.data?.error || "Une erreur est survenue");
         }
     };
 
