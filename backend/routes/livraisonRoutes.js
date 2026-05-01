@@ -1,13 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const {
-  assignerLivraison,
-  reassignLivreur,
-  terminerLivraison
-} = require('../controllers/livraisonController');
 
-router.post('/assign', assignerLivraison);
-router.put('/reassign', reassignLivreur);
-router.put('/finish/:idLivraison', terminerLivraison);
+const { getLivreursDisponibles } = require('../controllers/livraisonController');
+
+// API
+router.get('/livreurs-disponibles', getLivreursDisponibles);
 
 module.exports = router;
