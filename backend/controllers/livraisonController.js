@@ -2,6 +2,21 @@ const Livraison = require('../models/Livraison');
 const Colis = require('../models/Colis');
 const User = require('../models/User');
 
+// COMPTER LES LIVRAISONS DU JOUR
+const countLivraisonsJour = async (idLivreur, date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  return await Livraison.countDocuments({
+    idLivreur,
+    dateEstimee: { $gte: start, $lte: end },
+    statut: { $ne: "annulée" }
+  });
+};
+
 // GET LIVREURS DISPONIBLES
 const getLivreursDisponibles = async (req, res) => {
   try {
@@ -61,7 +76,19 @@ const assignerLivraison = async (req, res) => {
         message: "Livreur non actif"
       });
     }
+   // Vérifier limite quotidienne AVANT création
+const total = await countLivraisonsJour(idLivreur, dateEstimee);
 
+if (total >= 5) {
+  await User.findByIdAndUpdate(idLivreur, {
+    disponibilite: false
+  });
+
+  return res.status(400).json({
+    success: false,
+    message: "Livreur a atteint la limite de 5 livraisons pour cette date"
+  });
+}
     // 3. Créer livraison
     const livraison = await Livraison.create({
       idColis,
@@ -69,6 +96,7 @@ const assignerLivraison = async (req, res) => {
       dateEstimee,
       statut: "en cours"
     });
+
 
     // 4. Update colis
     colis.status = "en cours";
@@ -87,7 +115,6 @@ const assignerLivraison = async (req, res) => {
       error: error.message
     });
   }
-  console.log("BODY:", req.body);
 };
 
 module.exports = {
