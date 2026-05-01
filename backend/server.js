@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
 const colisRoutes = require('./routes/colisRoutes');
+const livraisonRoutes = require('./routes/livraisonRoutes');
 
 const app = express();
 const dns = require('dns');
@@ -13,6 +14,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
 app.use(cors());
 app.use(express.json());
 app.use('/api/colis', colisRoutes);
+app.use('/api/livraison', livraisonRoutes);
 
 
 // Route de test
