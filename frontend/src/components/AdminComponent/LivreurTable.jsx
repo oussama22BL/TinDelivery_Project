@@ -5,13 +5,13 @@ const LivreurTable = ({ livreurs, refreshList, onEdit }) => {
 
     // Fonction pour changer le statut (Actif/Inactif) au clic
     const toggleStatus = async (livreur) => {
-        const newStatus = livreur.status === 'actif' ? 'inactif' : 'actif';
         try {
-            // On envoie seulement le nouveau statut au backend d'Oussama
-            await axios.put(`/api/livreurs/${livreur._id}`, { status: newStatus });
+            // Utilise l'endpoint PATCH pour changeStatus
+            await axios.patch(`/api/livreurs/${livreur._id}/status`);
             refreshList(); // Mise à jour instantanée du tableau
         } catch (err) { 
             console.error("Erreur toggle statut:", err.response?.data);
+            alert(err.response?.data?.error || "Erreur lors du changement de statut");
         }
     };
 
