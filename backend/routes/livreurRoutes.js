@@ -1,16 +1,6 @@
-/**
- * Routes pour la gestion des livreurs
- * Endpoints:
- *   POST   /api/livreurs         - Créer un nouveau livreur
- *   GET    /api/livreurs         - Lister tous les livreurs
- */
-
 const express = require('express');
 const router = express.Router();
-const { createLivreur, getAllLivreurs } = require('../controllers/livreurController');
-const { searchLivreursByNom, getLivreursByDisponibilite} = require('../controllers/livreurController');
-const { deleteLivreur } = require('../controllers/livreurController');
-const { updateLivreur } = require('../controllers/livreurController');
+const { createLivreur, getAllLivreurs, searchLivreursByNom, getLivreursByDisponibilite, deleteLivreur, updateLivreur, changeStatus } = require('../controllers/livreurController');
 
 
 /**
@@ -43,5 +33,8 @@ router.delete('/:id', deleteLivreur);
 
 // Route pour mettre à jour les informations d'un livreur (accessible uniquement par l'admin)
 router.put('/:id', updateLivreur);
+
+// PATCH /api/livreurs/:id/status
+router.patch('/:id/status', changeStatus);
 
 module.exports = router;
