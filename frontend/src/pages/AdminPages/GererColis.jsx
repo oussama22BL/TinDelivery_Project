@@ -1,0 +1,130 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from '../../api/axios';
+import Sidebar from '../../components/AdminComponent/Sidebar';
+import ColisForm from '../../components/AdminComponent/ColisForm';
+import ColisTable from '../../components/AdminComponent/ColisTable';
+
+const GererColis = () => {
+  const [colis, setColis] = useState([]);
+  const [searchDestinataire, setSearchDestinataire] = useState('');
+  const [statutFilter, setStatutFilter] = useState('all');
+  const [showForm, setShowForm] = useState(false);
+  const [editingColis, setEditingColis] = useState(null);
+
+  const refreshList = async () => {
+    try {
+      const response = await axios.get('/api/colis');
+      setColis(response.data || []);
+    } catch (err) {
+      console.error("Erreur récupération colis:", err);
+    }
+  };
+
+  useEffect(() => {
+    refreshList();
+  }, []);
+
+  // Filtrage : uniquement par nom du destinataire + statut
+  const filteredColis = colis.filter(colis => {
+    const matchDestinataire = colis.destinataire?.nom?.toLowerCase().includes(searchDestinataire.toLowerCase());
+    const matchStatut = statutFilter === 'all' || colis.statut === statutFilter.toUpperCase();
+    return matchDestinataire && matchStatut;
+  });
+
+  return (
+    <div className="flex min-h-screen bg-slate-50">
+      <Sidebar />
+
+      <div className="flex-1 ml-64">
+        {/* Header simplifié (sans barre de recherche) */}
+        <header className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-end sticky top-0 z-10">
+          <div className="flex items-center gap-4">
+            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+              <i className="bi bi-gear"></i>
+            </button>
+            <Link to="/profile" className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+              AD
+            </Link>
+          </div>
+        </header>
+
+        {/* Contenu principal */}
+        <main className="p-8">
+          {/* Titre et bouton */}
+          <div className="flex items-start justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800 mb-1">Gestion des colis</h1>
+              <p className="text-slate-500">Supervisez et organisez vos flux logistiques en temps réel.</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowForm(!showForm);
+                setEditingColis(null);
+              }}
+              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-3 rounded-xl font-semibold text-sm transition-colors shadow-lg"
+            >
+              <i className={`bi ${showForm ? 'bi-x-lg' : 'bi-plus-lg'}`}></i>
+              {showForm ? 'Fermer' : 'Créer un colis'}
+            </button>
+          </div>
+
+          {/* Formulaire */}
+          {showForm && (
+            <div className="mb-10">
+              <ColisForm
+                refreshList={refreshList}
+                editingColis={editingColis}
+                setEditingColis={setEditingColis}
+                setShowForm={setShowForm}
+              />
+            </div>
+          )}
+
+          {/* Barre de recherche + Filtre par statut (côte à côte) */}
+          <div className="flex items-center gap-4 mb-6">
+            {/* Barre de recherche par destinataire */}
+            <div className="relative flex-1 max-w-md">
+              <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input
+                type="text"
+                placeholder="Rechercher par nom du destinataire..."
+                className="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                value={searchDestinataire}
+                onChange={(e) => setSearchDestinataire(e.target.value)}
+              />
+            </div>
+
+            {/* Filtre par statut */}
+            <select
+              className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+              value={statutFilter}
+              onChange={(e) => setStatutFilter(e.target.value)}
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="EN ATTENTE">En attente</option>
+              <option value="EN COURS">En cours</option>
+              <option value="LIVRÉ">Livré</option>
+              <option value="ANNULÉ">Annulé</option>
+            </select>
+          </div>
+
+          {/* Tableau */}
+          <ColisTable
+            colis={filteredColis}
+            refreshList={refreshList}
+            onEdit={setEditingColis}
+            setShowForm={setShowForm}
+          />
+
+          {/* Info nombre de colis */}
+          <div className="mt-4 text-right text-sm text-slate-500">
+            Affichage de {filteredColis.length} sur {colis.length} colis
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default GererColis;
