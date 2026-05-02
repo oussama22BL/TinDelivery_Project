@@ -17,34 +17,17 @@ const countLivraisonsJour = async (idLivreur, date) => {
   });
 };
 
-// GET LIVREURS DISPONIBLES
-const getLivreursDisponibles = async (req, res) => {
-  try {
-    const livreurs = await User.find({
-      role: "livreur",
-      status: "actif",
-      disponibilite: true
-    }).select("-motDePasse");
 
-    return res.status(200).json({
-      success: true,
-      count: livreurs.length,
-      data: livreurs
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Erreur serveur",
-      error: error.message
-    });
-  }
-};
 // ASSIGNER LIVRAISON
 const assignerLivraison = async (req, res) => {
   try {
     const { idColis, idLivreur, dateEstimee } = req.body;
-
+if (!dateEstimee) {
+  return res.status(400).json({
+    success: false,
+    message: "dateEstimee est requise"
+  });
+}
     // 1. Vérifier colis
     const colis = await Colis.findById(idColis);
     if (!colis) {
@@ -96,6 +79,12 @@ if (total >= 5) {
       dateEstimee,
       statut: "en cours"
     });
+    //  AJOUT IMPORTANT (NE PAS SUPPRIMER)
+const totalAfter = await countLivraisonsJour(idLivreur, dateEstimee);
+
+await User.findByIdAndUpdate(idLivreur, {
+  disponibilite: totalAfter < 5
+});
 
 
     // 4. Update colis
@@ -118,6 +107,5 @@ if (total >= 5) {
 };
 
 module.exports = {
-  getLivreursDisponibles,
   assignerLivraison
 };
