@@ -6,11 +6,11 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
   const [livreurs, setLivreurs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // GET /api/livraison/livreurs/disponibles - Récupérer les livreurs disponibles
+  // GET /api/livreurs/available - Récupérer les livreurs disponibles
   const chargerLivreurs = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/livraison/livreurs/disponibles');
+      const response = await axios.get('/api/livreurs/available');
       setLivreurs(response.data || []);
     } catch (error) {
       console.error('Erreur chargement livreurs:', error);
