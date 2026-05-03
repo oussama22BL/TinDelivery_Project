@@ -8,10 +8,10 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 
 const app = express();
-
-// Configuration DNS (optionnel)
 const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
+// Import routes
+const colisRoutes = require('./routes/colisRoutes');
 
 // ============ MIDDLEWARE ============
 app.use(cors());
@@ -39,6 +39,8 @@ app.use((req, res) => {
     path: req.path,
   });
 });
+// Routes API
+app.use('/api/colis', colisRoutes);
 
 // ============ FONCTION DE DÉMARRAGE ============
 const startServer = async () => {
