@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { createColis, getAllColis, updateColis } = require('../controllers/colisController');
+const { createColis, getAllColis } = require('../controllers/colisController');
 
 /**
  * @route   POST /api/colis

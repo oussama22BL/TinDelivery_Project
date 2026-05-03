@@ -41,6 +41,18 @@ const createColis = async (req, res) => {
     if (!destinataireEmail) champsManquants.push("destinataireEmail");
     if (!destinataireAdresse) champsManquants.push("destinataireAdresse");
 
+    // Validation : champs manquants
+    const champsManquants = [];
+    if (!expediteurNomComplet)  champsManquants.push("expediteurNomComplet");
+    if (!expediteurTelephone)   champsManquants.push("expediteurTelephone");
+    if (!expediteurEmail)       champsManquants.push("expediteurEmail");
+    if (!expediteurAdresse)     champsManquants.push("expediteurAdresse");
+    if (!destinataireNomComplet) champsManquants.push("destinataireNomComplet");
+    if (!destinataireTelephone) champsManquants.push("destinataireTelephone");
+    if (!destinataireEmail)     champsManquants.push("destinataireEmail");
+    if (!destinataireAdresse)   champsManquants.push("destinataireAdresse");
+
+    // Validation : poids séparée (cas poids = 0)
     if (poids === undefined || poids === null || poids === "") {
       champsManquants.push("poids");
     }
@@ -56,6 +68,7 @@ const createColis = async (req, res) => {
       });
     }
 
+    // Validation : poids positif
     if (Number(poids) <= 0) {
       return res.status(400).json({
         success: false,
@@ -66,6 +79,7 @@ const createColis = async (req, res) => {
 
     const codeSuivi = generateTrackingCode();
 
+    const codeSuivi = generateTrackingCode();
     const colis = await Colis.create({
       codeSuivi,
       poids,
@@ -108,6 +122,17 @@ return res.status(201).json({
   data: colis,
 });
   } catch (error) {
+    return res.status(201).json({
+      success: true,
+      message: "Colis créé avec succès.",
+      //codeSuivi,
+
+      data: colis,
+      
+    });
+
+  } catch (error) {
+    // Erreur de validation Mongoose → 400
     if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
@@ -119,6 +144,7 @@ return res.status(201).json({
       });
     }
 
+    // Erreur serveur → 500 (message interne masqué en production)
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la création du colis.",
@@ -135,6 +161,22 @@ const getAllColis = async (req, res) => {
 
     const [colis, total] = await Promise.all([
       Colis.find().skip(skip).limit(limit).sort({ createdAt: -1 }),
+/**
+ * @desc    Récupérer tous les colis (avec pagination)
+ * @route   GET /api/colis?page=1&limit=20
+ * @access  Admin
+ */
+const getAllColis = async (req, res) => {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip  = (page - 1) * limit;
+
+    const [colis, total] = await Promise.all([
+      Colis.find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
       Colis.countDocuments(),
     ]);
 
@@ -230,4 +272,8 @@ module.exports = {
   createColis,
   getAllColis,
   updateColis
+
+module.exports = {
+  createColis,
+  getAllColis,
 };
