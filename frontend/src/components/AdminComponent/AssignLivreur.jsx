@@ -11,7 +11,22 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
     try {
       setLoading(true);
       const response = await axios.get('/api/livreurs/available');
-      setLivreurs(response.data || []);
+      
+      
+      let livreursData = [];
+      if (response.data && response.data.success && Array.isArray(response.data.data)) {
+        
+        livreursData = response.data.data.map(livreur => ({
+          id: livreur._id,           
+          nom: livreur.nomComplet,   
+          telephone: livreur.telephone,
+          nbLivraisonsAujourdhui: livreur.nombreLivraison || 0
+        }));
+      }
+      
+      console.log('Livreurs chargés:', livreursData.length);
+      setLivreurs(livreursData);
+      
     } catch (error) {
       console.error('Erreur chargement livreurs:', error);
       alert(error.response?.data?.error || 'Erreur lors du chargement des livreurs');
@@ -34,12 +49,14 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
 
     if (window.confirm(`Assigner le colis #${colis?.code} à ce livreur ?`)) {
       try {
-        await axios.post('/api/livraison/assign', {
-          colisId: colis.id,
-          livreurId: parseInt(selectedLivreurId)
-        });
+     await axios.post('/api/livraisons/assign', {
+  idColis: colis._id,
+  idLivreur: selectedLivreurId,
+  dateEstimee: new Date().toISOString()
+});
         alert(` Colis #${colis?.code} assigné avec succès`);
-        onAssign(); // Rafraîchir la liste et fermer
+        onAssign(); // Rafraîchir la liste
+        onClose();  // Fermer le modal après assignation
       } catch (error) {
         console.error('Erreur assignation:', error);
         alert(error.response?.data?.error || ' Erreur lors de l\'assignation');

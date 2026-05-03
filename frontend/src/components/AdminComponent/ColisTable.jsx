@@ -68,7 +68,7 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
           </thead>
           <tbody>
             {colis.map((colis) => (
-              <tr key={colis.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+              <tr key={colis.id || colis._id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                 <td className="px-6 py-4 text-sm font-semibold text-slate-800">
                   #{colis.code}
                 </td>
@@ -83,14 +83,19 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
                 </td>
                 <td className="px-6 py-4 relative">
                   <button
-                    onClick={() => setMenuStatutOuvert(menuStatutOuvert === colis.id ? null : colis.id)}
+onClick={() =>
+  setMenuStatutOuvert(
+    menuStatutOuvert === (colis.id || colis._id)
+      ? null
+      : (colis.id || colis._id)
+  )
+}
                     className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatutStyle(colis.statut)} hover:opacity-80 transition cursor-pointer`}
                   >
                     {colis.statut}
                     <span className="ml-1 text-xs">▼</span>
                   </button>
-                  
-                  {menuStatutOuvert === colis.id && (
+                  {menuStatutOuvert === (colis.id || colis._id) && (
                     <div className="absolute z-10 mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-lg">
                       {statutsOptions.map((statut) => (
                         <button

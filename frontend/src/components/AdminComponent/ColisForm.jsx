@@ -27,27 +27,48 @@ const ColisForm = ({ refreshList, editingColis, setEditingColis, setShowForm }) 
     }
   };
 
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (editingColis) {
-        await axios.put(`/api/colis/${editingColis.id}`, formData);
-        alert(`Colis #${editingColis.code} modifié avec succès`);
-      } else {
-        await axios.post('/api/colis', formData);
-        alert(' Colis créé avec succès');
-      }
-      refreshList();
-      setShowForm(false);
-      setEditingColis(null);
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert(error.response?.data?.error || 'Erreur lors de l\'enregistrement');
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    const payload = {
+      poids: Number(formData.poids),
+
+      expediteurNomComplet: formData.expediteur.nom,
+      expediteurTelephone: formData.expediteur.telephone,
+      expediteurEmail: formData.expediteur.email,
+      expediteurAdresse: formData.expediteur.adresse,
+
+      destinataireNomComplet: formData.destinataire.nom,
+      destinataireTelephone: formData.destinataire.telephone,
+      destinataireEmail: formData.destinataire.email,
+      destinataireAdresse: formData.destinataire.adresse,
+    };
+
+    if (editingColis) {
+  const id = editingColis.id || editingColis._id;
+
+  await axios.put(`/api/colis/${id}`, payload);
+
+  alert(`Colis #${editingColis.code} modifié avec succès`);
+} else {
+  await axios.post('/api/colis', payload);
+  alert('Colis créé avec succès');
+}
+
+    refreshList();
+    setShowForm(false);
+    setEditingColis(null);
+
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert(error.response?.data?.message || 'Erreur lors de l\'enregistrement');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">

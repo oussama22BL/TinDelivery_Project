@@ -12,31 +12,68 @@ const GererColis = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingColis, setEditingColis] = useState(null);
 
+
   const refreshList = async () => {
-    try {
-      const response = await axios.get('/api/colis');
-      setColis(response.data || []);
-    } catch (err) {
-      console.error("Erreur récupération colis:", err);
-    }
-  };
+  try {
+    const response = await axios.get('/api/colis');
+
+    const data = response.data?.data || [];
+
+    const formatted = Array.isArray(data)
+      ? data.map((c) => ({
+          id: c._id,
+          code: c.codeSuivi,
+          poids: c.poids,
+          statut: c.statut,
+          dateCreation: new Date(c.createdAt).toLocaleString(),
+
+          expediteur: {
+            nom: c.expediteurNomComplet,
+            email: c.expediteurEmail,
+            telephone: c.expediteurTelephone,
+            adresse: c.expediteurAdresse,
+          },
+
+          destinataire: {
+            nom: c.destinataireNomComplet,
+            email: c.destinataireEmail,
+            telephone: c.destinataireTelephone,
+            adresse: c.destinataireAdresse,
+          },
+        }))
+      : [];
+
+    setColis(formatted);
+  } catch (err) {
+    console.error("Erreur récupération colis:", err);
+    setColis([]);
+  }
+};
 
   useEffect(() => {
     refreshList();
   }, []);
 
-  // Filtrage : uniquement par nom du destinataire + statut
-  const filteredColis = colis.filter(colis => {
-    const matchDestinataire = colis.destinataire?.nom?.toLowerCase().includes(searchDestinataire.toLowerCase());
-    const matchStatut = statutFilter === 'all' || colis.statut === statutFilter.toUpperCase();
-    return matchDestinataire && matchStatut;
-  });
+ const safeColis = Array.isArray(colis) ? colis : [];
+
+const filteredColis = safeColis.filter(item => {
+  const matchDestinataire =
+    item.destinataire?.nom?.toLowerCase().includes(searchDestinataire.toLowerCase());
+
+  const matchStatut =
+    statutFilter === 'all' || item.statut === statutFilter.toUpperCase();
+
+  return matchDestinataire && matchStatut;
+});
+
+
 
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
       <div className="flex-1 ml-64">
+
         {/* Header simplifié (sans barre de recherche) */}
         <header className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-end sticky top-0 z-10">
           <div className="flex items-center gap-4">
