@@ -6,6 +6,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
+const colisRoutes = require('./routes/colisRoutes');
+const livraisonRoutes = require('./routes/livraisonRoutes');
 
 const app = express();
 
@@ -16,7 +18,6 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 // ============ MIDDLEWARE ============
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // ============ ROUTES DE TEST ============
 app.get('/', (req, res) => {
