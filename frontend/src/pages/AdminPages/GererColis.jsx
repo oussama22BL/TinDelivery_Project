@@ -24,7 +24,7 @@ const GererColis = () => {
           id: c._id,
           code: c.codeSuivi,
           poids: c.poids,
-          statut: c.statut,
+          statut: c.status.toUpperCase().replace(/ /g, ' '),
           dateCreation: new Date(c.createdAt).toLocaleString(),
 
           expediteur: {

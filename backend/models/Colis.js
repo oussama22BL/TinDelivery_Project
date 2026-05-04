@@ -21,11 +21,11 @@ const colisSchema = new mongoose.Schema({
   dateLivraison: {
     type: Date,
   },
-codeSuivi: {
-  type: String,
-  required: true,
-  unique: true,
-},
+  codeSuivi: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   // Expéditeur
   expediteurNomComplet: {
     type: String,

@@ -30,6 +30,8 @@ app.get('/', (req, res) => {
 // ============ API ROUTES ============
 // On importe et on utilise les routes une seule fois
 const livreurRoutes = require('./routes/livreurRoutes');
+app.use('/api/colis', colisRoutes);
+
 app.use('/api/livreurs', livreurRoutes);
 
 // ============ GESTION DES ERREURS 404 ============

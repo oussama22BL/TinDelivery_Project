@@ -23,7 +23,7 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
   const handleUpdateStatut = async (id, nouveauStatut, ancienStatut) => {
     if (window.confirm(`Changer le statut de "${ancienStatut}" vers "${nouveauStatut}" ?`)) {
       try {
-        await axios.put(`/api/colis/${id}`, { statut: nouveauStatut });
+        await axios.put(`/api/colis/${id}`, { status: nouveauStatut.toLowerCase().replace(/\s+/g, ' ') });
         refreshList();
       } catch (error) {
         console.error('Erreur changement statut:', error);
@@ -82,14 +82,13 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
                   {colis.dateCreation}
                 </td>
                 <td className="px-6 py-4 relative">
-                  <button
-onClick={() =>
-  setMenuStatutOuvert(
-    menuStatutOuvert === (colis.id || colis._id)
-      ? null
-      : (colis.id || colis._id)
-  )
-}
+                  <button onClick={() =>
+                      setMenuStatutOuvert(
+                        menuStatutOuvert === (colis.id || colis._id)
+                          ? null
+                          : (colis.id || colis._id)
+                      )
+                    }
                     className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatutStyle(colis.statut)} hover:opacity-80 transition cursor-pointer`}
                   >
                     {colis.statut}

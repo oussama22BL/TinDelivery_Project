@@ -1,7 +1,7 @@
 // routes/colisRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createColis, getAllColis, updateColis,deleteColis  } = require('../controllers/colisController');
+const { createColis, getAllColis, updateColis,deleteColis, assignColisToLivreur  } = require('../controllers/colisController');
 
 /**
  * @route   POST /api/colis
@@ -20,5 +20,8 @@ router.get('/', getAllColis);
 router.put('/:id', updateColis);
 // Route pour supprimer un colis    
 router.delete('/:id', deleteColis);
+
+// Route pour assigner un colis à un livreur
+router.post('/:id/assign', assignColisToLivreur);
 
 module.exports = router;

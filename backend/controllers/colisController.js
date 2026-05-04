@@ -1,5 +1,7 @@
 // controllers/colisController.js
 const Colis = require('../models/Colis');
+const Livraison = require('../models/Livraison');
+const User = require('../models/User');
 const { sendTrackingEmail } = require("../services/emailService");
 
 /**
@@ -13,8 +15,7 @@ const generateTrackingCode = () => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   return `TD-${date}-${random}`;
 };
-console.log("🔥 COLIS CONTROLLER V2 ACTIF");
-console.log("🚨 CONTROLLER US10 EXECUTÉ");
+
 
 const createColis = async (req, res) => {
   try {
@@ -65,10 +66,12 @@ const createColis = async (req, res) => {
     }
 
     const codeSuivi = generateTrackingCode();
+    const statut = "en attente";
 
     const colis = await Colis.create({
       codeSuivi,
       poids,
+      status: statut,
       expediteurNomComplet,
       expediteurTelephone,
       expediteurEmail,
@@ -79,42 +82,42 @@ const createColis = async (req, res) => {
       destinataireAdresse,
     });
 
-let emailResults = [];
+    let emailResults = [];
 
-try {
-  const results = await Promise.all([
-    sendTrackingEmail(expediteurEmail, codeSuivi),
-    sendTrackingEmail(destinataireEmail, codeSuivi)
-  ]);
+    try {
+      const results = await Promise.all([
+        sendTrackingEmail(expediteurEmail, codeSuivi),
+        sendTrackingEmail(destinataireEmail, codeSuivi)
+      ]);
 
-  emailResults = results;
-  console.log("📧 Email status :", emailResults);
+      emailResults = results;
+      console.log("📧 Email status :", emailResults);
 
 
-} catch (err) {
-  console.error("Erreur globale email :", err.message);
-}
-const [expediteurResult, destinataireResult] = emailResults;
+    } catch (err) {
+      console.error("Erreur globale email :", err.message);
+    }
+    const [expediteurResult, destinataireResult] = emailResults;
 
-return res.status(201).json({
-  success: true,
-  message: "Colis créé avec succès.",
-  codeSuivi,
-  emailStatus: {
-    expediteur: expediteurResult || { success: false, error: "Non envoyé" },
-    destinataire:  destinataireResult || { success: false, error: "Non envoyé" }
-  },
-  recipients: [expediteurEmail, destinataireEmail],
-  data: colis,
-});
-  } catch (error) {
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: "Données invalides.",
-        errors: Object.values(error.errors).map((e) => ({
-          champ: e.path,
-          message: e.message,
+    return res.status(201).json({
+      success: true,
+      message: "Colis créé avec succès.",
+      codeSuivi,
+      emailStatus: {
+        expediteur: expediteurResult || { success: false, error: "Non envoyé" },
+        destinataire:  destinataireResult || { success: false, error: "Non envoyé" }
+      },
+      recipients: [expediteurEmail, destinataireEmail],
+      data: colis,
+    });
+    } catch (error) {
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          success: false,
+          message: "Données invalides.",
+          errors: Object.values(error.errors).map((e) => ({
+            champ: e.path,
+            message: e.message,
         })),
       });
     }
@@ -158,6 +161,7 @@ const getAllColis = async (req, res) => {
     });
   }
 };
+
 const updateColis = async (req, res) => {
   try {
     const { id } = req.params;
@@ -183,6 +187,7 @@ const updateColis = async (req, res) => {
     // 3. Liste des champs autorisés
     const allowedFields = [
       "poids",
+      "status",
       "expediteurNomComplet",
       "expediteurTelephone",
       "expediteurEmail",
@@ -226,6 +231,7 @@ const updateColis = async (req, res) => {
     });
   }
 };
+
 const deleteColis = async (req, res) => {
   try {
     const { id } = req.params;
@@ -264,9 +270,82 @@ const deleteColis = async (req, res) => {
     });
   }
 };
+
+
+
+const assignColisToLivreur = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { idLivreur } = req.body;
+
+    // --- Vérifier que le colis existe ---
+    const colis = await Colis.findById(id);
+    if (!colis) {
+      return res.status(404).json({ success: false, error: 'Colis introuvable' });
+    }
+
+    // --- Vérifier le livreur ---
+    const livreur = await User.findOne({ _id: idLivreur, role: 'livreur' });
+    if (!livreur) {
+      return res.status(404).json({ success: false, error: 'Livreur introuvable' });
+    }
+
+    // --- Vérifier la disponibilité ---
+    if (!livreur.disponibilite) {
+      return res.status(400).json({ success: false, error: 'Ce livreur n’est pas disponible actuellement.' });
+    }
+
+    // --- Vérifier la limite journalière de 10 livraisons ---
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    const finJour = new Date();
+    finJour.setHours(23, 59, 59, 999);
+
+    const nbLivraisonsAujourdhui = await Livraison.countDocuments({
+      idLivreur,
+      createdAt: { $gte: debutJour, $lte: finJour }
+    });
+
+    if (nbLivraisonsAujourdhui >= 10) {
+      return res.status(400).json({
+        success: false,
+        error: `Limite journalière atteinte : ${nbLivraisonsAujourdhui} livraisons déjà assignées aujourd’hui.`
+      });
+    }
+
+    // --- Créer la livraison ---
+    const livraison = await Livraison.create({
+      idColis: id,
+      idLivreur,
+      dateEstimee: req.body.dateEstimee || new Date(Date.now() + 24 * 60 * 60 * 1000), // par défaut demain
+      statut: 'en attente',
+    });
+
+    // --- Mise à jour du colis ---
+    colis.status = 'en cours';
+    await colis.save();
+
+    // --- Mise à jour du compteur du livreur (optionnel mais cohérent) ---
+    livreur.nombreLivraison = (livreur.nombreLivraison || 0) + 1;
+    await livreur.save();
+
+    res.status(201).json({
+      success: true,
+      data: livraison,
+      message: 'Colis assigné au livreur avec succès.',
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+
+
+
 module.exports = {
   createColis,
   getAllColis,
   updateColis,
-  deleteColis
+  deleteColis,
+  assignColisToLivreur
 };

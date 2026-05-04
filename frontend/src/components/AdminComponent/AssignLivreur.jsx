@@ -39,7 +39,7 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
     chargerLivreurs();
   }, []);
 
-  // POST /api/livraison/assign - Assigner le colis au livreur
+  // POST /api/colis/:id/assign - Assigner le colis au livreur
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedLivreurId) {
@@ -49,11 +49,10 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
 
     if (window.confirm(`Assigner le colis #${colis?.code} à ce livreur ?`)) {
       try {
-     await axios.post('/api/livraisons/assign', {
-  idColis: colis._id,
-  idLivreur: selectedLivreurId,
-  dateEstimee: new Date().toISOString()
-});
+        await axios.post(`/api/colis/${colis.id}/assign`, {
+          idLivreur: selectedLivreurId,
+          dateEstimee: new Date().toISOString()
+        });
         alert(` Colis #${colis?.code} assigné avec succès`);
         onAssign(); // Rafraîchir la liste
         onClose();  // Fermer le modal après assignation
