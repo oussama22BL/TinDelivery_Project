@@ -1,4 +1,6 @@
 const Livraison = require('../models/Livraison');
+const User = require('../models/User');
+const Colis = require('../models/Colis');
 
 // Récupérer toutes les livraisons avec pagination
 exports.getAllLivraisons = async (req, res) => {
@@ -90,6 +92,26 @@ exports.updateLivraison = async (req, res) => {
     await livraison.populate(['idColis', { path: 'idLivreur', select: 'nomComplet email' }]);
 
     res.json({ success: true, data: livraison });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Mettre à jour une livraison (ex: changement de livreur, mise à jour du statut)
+exports.deleteLivraison = async (req, res) => {
+  try {
+    const livraison = await Livraison.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+    if (livraison.statut === 'livrée') return res.status(400).json({ error: 'Impossible de supprimer une livraison livrée' });
+
+    // Remettre le colis  livrée
+    await Colis.findByIdAndUpdate(livraison.idColis, { status: 'livré' });
+
+    
+
+    await Livraison.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Livraison supprimée' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
