@@ -27,6 +27,26 @@ exports.getAllLivraisons = async (req, res) => {
   }
 };
 
+// Récupérer les statistiques de livraisons
+exports.getStatsLivraisons = async (req, res) => {
+  try {
+    const [total, enAttente, enCours, livrees, annulees] = await Promise.all([
+      Livraison.countDocuments(),
+      Livraison.countDocuments({ statut: 'en attente' }),
+      Livraison.countDocuments({ statut: 'en cours' }),
+      Livraison.countDocuments({ statut: 'livrée' }),
+      Livraison.countDocuments({ statut: 'annulée' })
+    ]);
+
+    res.json({
+      success: true,
+      stats: { total, enAttente, enCours, livrees, annulees }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 
 
 
