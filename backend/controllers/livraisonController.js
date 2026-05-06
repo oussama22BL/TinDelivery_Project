@@ -47,6 +47,54 @@ exports.getStatsLivraisons = async (req, res) => {
   }
 };
 
+// Mettre à jour une livraison (ex: changement de livreur, mise à jour du statut)
+exports.updateLivraison = async (req, res) => {
+  try {
+    const livraison = await Livraison.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+    if (['livrée', 'annulée'].includes(livraison.statut))
+      return res.status(400).json({ error: 'Modification interdite sur une livraison terminée' });
+
+    const { dateEstimee, statut, idColis, idLivreur } = req.body;
+
+    // Gestion changement de livreur
+    if (idLivreur && idLivreur !== livraison.idLivreur?.toString()) {
+      const livreur = await User.findOne({ _id: idLivreur, role: 'livreur' });
+      if (!livreur) return res.status(404).json({ error: 'Livreur introuvable' });
+      if (!livreur.disponibilite) return res.status(400).json({ error: 'Livreur non disponible' });
+
+      const debut = new Date(); debut.setHours(0,0,0,0);
+      const fin = new Date(); fin.setHours(23,59,59,999);
+      const nb = await Livraison.countDocuments({
+        idLivreur,
+        _id: { $ne: livraison._id },
+        createdAt: { $gte: debut, $lte: fin }
+      });
+      if (nb >= 10) return res.status(400).json({ error: 'Limite journalière atteinte' });
+
+      // Mise à jour des compteurs
+      await User.findByIdAndUpdate(livraison.idLivreur, { $inc: { nombreLivraison: -1 } });
+      await User.findByIdAndUpdate(idLivreur, { $inc: { nombreLivraison: 1 } });
+    }
+
+    if (dateEstimee) livraison.dateEstimee = dateEstimee;
+    if (statut) livraison.statut = statut;
+    if (idColis) {
+      const colis = await Colis.findById(idColis);
+      if (!colis) return res.status(404).json({ error: 'Colis introuvable' });
+      livraison.idColis = idColis;
+    }
+    if (idLivreur) livraison.idLivreur = idLivreur;
+
+    await livraison.save();
+    await livraison.populate(['idColis', { path: 'idLivreur', select: 'nomComplet email' }]);
+
+    res.json({ success: true, data: livraison });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 
 
