@@ -4,6 +4,8 @@ import axios from '../../api/axios';
 import Sidebar from '../../components/AdminComponent/Sidebar';
 import ColisForm from '../../components/AdminComponent/ColisForm';
 import ColisTable from '../../components/AdminComponent/ColisTable';
+import TopBar from '../../components/AdminComponent/TopBar';
+
 
 const GererColis = () => {
   const [colis, setColis] = useState([]);
@@ -11,6 +13,7 @@ const GererColis = () => {
   const [statutFilter, setStatutFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
   const [editingColis, setEditingColis] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   const refreshList = async () => {
@@ -75,16 +78,8 @@ const filteredColis = safeColis.filter(item => {
       <div className="flex-1 ml-64">
 
         {/* Header simplifié (sans barre de recherche) */}
-        <header className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-end sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-              <i className="bi bi-gear"></i>
-            </button>
-            <Link to="/profile" className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-              AD
-            </Link>
-          </div>
-        </header>
+          <TopBar searchTerm={searchQuery} setSearchTerm={setSearchQuery} /> 
+
 
         {/* Contenu principal */}
         <main className="p-8">

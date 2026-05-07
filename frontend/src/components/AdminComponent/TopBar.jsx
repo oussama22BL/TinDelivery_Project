@@ -1,30 +1,40 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const TopBar = ({ searchTerm, setSearchTerm }) => {
     return (
-        <div className="h-20 bg-white border-b border-gray-50 flex items-center justify-between px-10 sticky top-0 z-10">
+        <header className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
             {/* Barre de recherche (Design Maquette) */}
-            <div className="relative w-96">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></span>
-                <input 
-                    type="text"
-                    placeholder="Rechercher un livreur, un colis..."
-                    className="w-full bg-gray-50 border-none rounded-2xl py-2.5 pl-12 pr-4 text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-
-            {/* Profil & Settings */}
-            <div className="flex items-center gap-5">
-                <button className="text-gray-400 hover:text-gray-600">⚙️</button>
-                <div className="flex items-center gap-3 pl-5 border-l border-gray-100">
-                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm">
-                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=0f172a&color=fff" alt="User" />
-                    </div>
+            <div className="flex items-center gap-4 flex-1 max-w-xl">
+                <div className="relative flex-1">
+                    {/* Icône de recherche Bootstrap */}
+                    <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                    <input 
+                        type="text"
+                        placeholder="Rechercher un livreur, un colis..."
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
             </div>
-        </div>
+
+            {/* Profil & Settings (Exactement comme demandé) */}
+            <div className="flex items-center gap-4">
+                {/* Icône Gear (Settings) */}
+                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i className="bi bi-gear w-5 h-5"></i>
+                </button>
+                
+                {/* Lien Profil avec initiales "AD" et dégradé Cyan */}
+                <Link 
+                    to="/profile" 
+                    className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-semibold text-sm shadow-md"
+                >
+                    AD
+                </Link>
+            </div>
+        </header>
     );
 };
 
