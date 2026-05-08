@@ -8,103 +8,89 @@ import ConfirmModal from '../../components/AdminComponent/ConfirmModal';
 import DetailsModal from '../../components/AdminComponent/DetailsModal';
 import EditLivraisonModal from '../../components/AdminComponent/EditLivraisonModal';
 
-
 const GereLivraisons = () => {
-  // ... tes states actuels ...
+    // States des données
+    const [livraisons, setLivraisons] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // States des Filtres (Mise à jour pour inclure la barre de recherche spécifique)
+    const [searchQuery, setSearchQuery] = useState(""); // Pour la TopBar
+    const [searchDestinataire, setSearchDestinataire] = useState(""); // Pour le bloc filtre
+    const [statutFilter, setStatutFilter] = useState("all");
+    const [showFilters, setShowFilters] = useState(false);
+
+    // Modales
     const [modalConfirm, setModalConfirm] = useState({ show: false, id: null, code: '', action: null });
     const [modalDetails, setModalDetails] = useState({ show: false, data: null });
     const [modalEdit, setModalEdit] = useState({ show: false, data: null });
-  const [livraisons, setLivraisons] = useState([]);//pour stocker les données des livraisons
-const [showFilters, setShowFilters] = useState(false);// afficheer les filtres oou non
-const [searchQuery, setSearchQuery] = useState("");//pour la barre de recherche
-const [statutFilter, setStatutFilter] = useState("all");
 
-  const [loading, setLoading]= useState(true);//pour afficher un indicateur de chargement pendant la récupération des données
-
-  const [statsData, setStatsData] = useState({ total: 0, enAttente: 0, reussies: 0, annulees: 0 });
-
-
-  //fonction pour recuperer les donnees des livraisons depuis l'api (GDLT-10)
- const refreshList = async () => {
-    try {
-        setLoading(true);
-        
-        // 1. Récupérer la liste des livraisons
-        const resLivraisons = await axios.get('/api/livraisons');
-        console.log("DONNÉES REÇUES :", resLivraisons.data.data); // AJOUTE CETTE LIGNE
-        setLivraisons(resLivraisons.data.data || resLivraisons.data);
-
-        // 2. Récupérer les statistiques réelles (Route d'Oussama)
-        const resStats = await axios.get('/api/livraisons/stats');
-        setStatsData(resStats.data.data || resStats.data);
-
-    } catch (err) {
-        console.error("Erreur de connexion aux API d'Oussama :", err);
-    } finally {
-        setLoading(false);
-    }
-};
-  useEffect(()=>{
-    refreshList();
-  },[]);
-   // --- LOGIQUE DE SUPPRESSION (GDLT-72) ---
-    const openDeleteModal = (id, code) => {
-        setModalConfirm({
-            show: true,
-            title: "Supprimer la livraison",
-            message: `Voulez-vous vraiment supprimer définitivement la livraison ${code} ?`,
-            type: 'danger',
-            action: () => confirmDelete(id)
-        });
+    const refreshList = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.get('/api/livraisons');
+            setLivraisons(res.data.data || res.data || []);
+        } catch (err) {
+            console.error("Erreur API :", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    useEffect(() => { refreshList(); }, []);
+
+    // --- LOGIQUE DE FILTRAGE (CORRIGÉE : EXACTEMENT COMME DANS COLIS) ---
+    const filteredLivraisons = livraisons.filter(item => {
+        // 1. Match TopBar (Code ou Nom)
+        const matchGeneral = 
+            item.idColis?.codeSuivi?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.idColis?.destinataireNomComplet?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // 2. Match Recherche Destinataire spécifique (le nouveau champ)
+        const matchDestinataire = item.idColis?.destinataireNomComplet?.toLowerCase().includes(searchDestinataire.toLowerCase());
+
+        // 3. Match Statut (Comparaison stricte avec les valeurs backend)
+        const matchStatut = statutFilter === "all" || item.statut === statutFilter;
+
+        return matchGeneral && matchDestinataire && matchStatut;
+    });
+
+    // Stats pour les cartes
+    const stats = {
+        total: livraisons.length,
+        enCours: livraisons.filter(l => l.statut === "en cours" || l.statut === "en attente").length,
+        reussies: livraisons.filter(l => l.statut === "livrée").length,
+        annulees: livraisons.filter(l => l.statut === "annulée").length,
+    };
+
+    // Fonctions API
     const confirmDelete = async (id) => {
         try {
             await axios.delete(`/api/livraisons/${id}`);
             setModalConfirm({ ...modalConfirm, show: false });
-            refreshList();
-        } catch (err) {
-            alert("Erreur lors de la suppression sur le serveur");
-        }
+            await refreshList();
+        } catch (err) { alert("Erreur suppression"); }
     };
-// --- LOGIQUE DE FILTRAGE ---
-    const filteredLivraisons = livraisons.filter(item => {
-        const matchSearch = 
-            item.idColis?.codeSuivi?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.idColis?.destinataireNom?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchStatut = statutFilter === "all" || item.statut?.toLowerCase() === statutFilter.toLowerCase();
-        return matchSearch && matchStatut;
-    });
-// Calcule les stats dynamiquement (pour tes StatCards)
-const stats = {
-    total: livraisons.length,
-    enAttente: livraisons.filter(l => l.statut === "En attente").length,
-    reussies: livraisons.filter(l => l.statut === "Livré").length,
-    annulees: livraisons.filter(l => l.statut === "Annulé").length,
-};
-// logique update 
-const handleUpdate = async (id, updatedData) => {
-    try {
-        await axios.patch(`/api/livraisons/${id}`, updatedData);
-        setModalEdit({ show: false, data: null });
-        refreshList(); // Mise à jour du tableau et des stats
-    } catch (err) {
-        alert("Erreur lors de la modification sur le serveur");
-    }
-};
 
-  return (
-    <div className='flex min-h-screen bg-slate-50'>
-      <Sidebar />
-      <div className='flex-1 ml-64'>
-        <TopBar searchTerm={searchQuery} setSearchTerm={setSearchQuery}/>
-        <main className='p-8'>
-          {/* header de la page  */}
-          <div className='mb-8'>
-            <h1 className="text-3xl font-bold text-slate-800">Supervision des livraisons</h1>
-            <p className="text-slate-500">Gérez et suivez l'état des colis en temps réel.</p>
-          </div>
-           {/* Prochaine étape : Les cartes statistiques et le Tableau */}
+    const handleUpdate = async (id, updatedData) => {
+        try {
+            await axios.patch(`/api/livraisons/${id}`, updatedData);
+            setModalEdit({ show: false, data: null });
+            await refreshList();
+        } catch (err) { alert("Erreur modification"); }
+    };
+
+    return (
+        <div className='flex min-h-screen bg-slate-50'>
+            <Sidebar />
+            <div className='flex-1 ml-64'>
+                <TopBar searchTerm={searchQuery} setSearchTerm={setSearchQuery}/>
+                <main className='p-8'>
+                    <div className='mb-8'>
+                        <h1 className="text-3xl font-bold text-slate-800">Supervision des livraisons</h1>
+                        <p className="text-slate-500">Gérez et suivez l'état des colis en temps réel.</p>
+                    </div>
+
+                   {/* Prochaine étape : Les cartes statistiques et le Tableau */}
            <div className="grid grid-cols-4 gap-6 mb-8">
               <StatCard label="TOTAL EXPÉDITIONS" value={stats.total} icon="bi-box" color="text-slate-600" trend="+12%" />
             <StatCard label="COLIS EN TRANSIT" value={stats.enAttente} icon="bi-clock" color="text-slate-600" trend="En attente" />
@@ -123,65 +109,52 @@ const handleUpdate = async (id, updatedData) => {
                 <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/5 rounded-full"></div>
             </div>
             </div>
-             {/* On déplace le select ici et on ne l'affiche que si showFilters est vrai */}
-  {showFilters && (
-    <div className="mb-4 p-4 bg-white rounded-xl border border-slate-100 shadow-sm animate-in slide-in-from-top-2 duration-300">
-        <div className="flex items-center gap-4">
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Filtrer par :</span>
-            <select
-                className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 focus:ring-2 focus:ring-cyan-500 outline-none cursor-pointer"
-                value={statutFilter}
-                onChange={(e) => setStatutFilter(e.target.value)}
-            >
-                <option value="all">Tous les statuts</option>
-                <option value="En cours">En cours</option>
-                <option value="Livré">Livré</option>
-                <option value="En attente">En attente</option>
-                <option value="Annulé">Annulé</option>
-            </select>
-            {/* Tu pourras ajouter d'autres filtres ici plus tard (Date, Livreur, etc.) */}
-        </div>
-    </div>
-  )}
 
-            
-             
-              {/* 3. Utilisation de ton nouveau composant Tableau */}
-          <LivraisonTable 
+                    {/* BARRE DE FILTRES : COMME GESTION COLIS */}
+                    {showFilters && (
+                        <div className="flex items-center gap-4 mb-6 animate-in slide-in-from-top-2 duration-300">
+                            <div className="relative flex-1 max-w-md">
+                                <i className="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher par nom du destinataire..."
+                                    className="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-cyan-500 outline-none"
+                                    value={searchDestinataire}
+                                    onChange={(e) => setSearchDestinataire(e.target.value)}
+                                />
+                            </div>
+
+                            <select
+                                className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 cursor-pointer outline-none focus:ring-2 focus:ring-cyan-500"
+                                value={statutFilter}
+                                onChange={(e) => setStatutFilter(e.target.value)}
+                            >
+                                <option value="all">Tous les statuts</option>
+                                {/* <option value="en attente">En attente</option> */}
+                                <option value="en cours">En cours</option>
+                                <option value="livrée">Livrée</option>
+                                <option value="annulée">Annulée</option>
+                            </select>
+                        </div>
+                    )}
+
+                    <LivraisonTable 
                         data={filteredLivraisons} 
                         onToggleFilters={() => setShowFilters(!showFilters)} 
                         isFilterActive={showFilters}
                         refreshList={refreshList}
-                        onDelete={openDeleteModal}
+                        onDelete={(id, code) => setModalConfirm({ show: true, id, code, action: () => confirmDelete(id), title: "Supprimer", message: `Voulez-vous supprimer ${code} ?`, type: 'danger' })}
                         onViewDetails={(item) => setModalDetails({ show: true, data: item })}
                         onEdit={(item) => setModalEdit({ show: true, data: item })} 
                     />
-                    <EditLivraisonModal 
-                        isOpen={modalEdit.show}
-                        onClose={() => setModalEdit({ show: false, data: null })}
-                        deliveryData={modalEdit.data}
-                        onUpdate={handleUpdate}
-                    />
+                </main>
+            </div>
 
-        </main>
-      </div>
-       {/* LES MODALES PROFESSIONNELLES */}
-            <ConfirmModal 
-                isOpen={modalConfirm.show}
-                onClose={() => setModalConfirm({ ...modalConfirm, show: false })}
-                onConfirm={modalConfirm.action}
-                title={modalConfirm.title}
-                message={modalConfirm.message}
-                type={modalConfirm.type}
-            />
-
-            <DetailsModal 
-                isOpen={modalDetails.show}
-                onClose={() => setModalDetails({ ...modalDetails, show: false })}
-                data={modalDetails.data}
-            />
-    </div>
-  );
+            <ConfirmModal isOpen={modalConfirm.show} onClose={() => setModalConfirm({ ...modalConfirm, show: false })} onConfirm={modalConfirm.action} title={modalConfirm.title} message={modalConfirm.message} type={modalConfirm.type} />
+            <DetailsModal isOpen={modalDetails.show} onClose={() => setModalDetails({ ...modalDetails, show: false })} data={modalDetails.data} />
+            <EditLivraisonModal isOpen={modalEdit.show} onClose={() => setModalEdit({ show: false, data: null })} deliveryData={modalEdit.data} onUpdate={handleUpdate} />
+        </div>
+    );
 };
 
-export default GereLivraisons
+export default GereLivraisons;
