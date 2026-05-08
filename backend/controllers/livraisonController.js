@@ -57,7 +57,18 @@ exports.updateLivraison = async (req, res) => {
     if (['livrée', 'annulée'].includes(livraison.statut))
       return res.status(400).json({ error: 'Modification interdite sur une livraison terminée' });
 
-    const { dateEstimee, statut, idColis, idLivreur } = req.body;
+    const { dateEstimee, statut, idColis, idLivreur, dateLivraison } = req.body;
+
+     // ---- NOUVEAU : gérer le passage au statut "livrée" ----
+    if (statut === 'livrée') {
+      // Si on fournit une date de livraison, on l'utilise, sinon on prend la date actuelle
+      livraison.dateLivraison = dateLivraison ? new Date(dateLivraison) : new Date();
+      // Mettre à jour le colis correspondant
+      await Colis.findByIdAndUpdate(livraison.idColis, {
+        status: 'livré',
+        dateLivraison: livraison.dateLivraison
+      });
+    }
 
     // Gestion changement de livreur
     if (idLivreur && idLivreur !== livraison.idLivreur?.toString()) {
@@ -79,7 +90,7 @@ exports.updateLivraison = async (req, res) => {
       await User.findByIdAndUpdate(idLivreur, { $inc: { nombreLivraison: 1 } });
     }
 
-    if (dateEstimee) livraison.dateEstimee = dateEstimee;
+    if (dateEstimee) livraison.dateEstimee = new Date(dateEstimee);
     if (statut) livraison.statut = statut;
     if (idColis) {
       const colis = await Colis.findById(idColis);
