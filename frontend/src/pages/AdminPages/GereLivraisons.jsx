@@ -7,58 +7,73 @@ import LivraisonTable from '../../components/AdminComponent/LivraisonTable';
 import ConfirmModal from '../../components/AdminComponent/ConfirmModal';
 import DetailsModal from '../../components/AdminComponent/DetailsModal';
 
-//MockData pour tester 
-const mockLivraisons = [
-    { _id: "1", codeSuivi: "#TK-9021", destinataireNom: "Jean Dupont", adresse: "12 Avenue des Champs-Élysées", livreurNom: "Jean-Marc Dupont", statut: "En cours", date: "12 Oct 2023" },
-    { _id: "2", codeSuivi: "#TK-8845", destinataireNom: "Marie Lefebvre", adresse: "45 Rue de la Liberté, Lyon", livreurNom: "Marie Lefebvre", statut: "Livré", date: "14 Oct 2023" },
-    { _id: "3", codeSuivi: "#TK-9102", destinataireNom: "Non assigné", adresse: "8 bis Quai de la Rapée, Paris", livreurNom: null, statut: "En attente", date: "14 Oct 2023" },
-    { _id: "4", codeSuivi: "#TK-7721", destinataireNom: "Marc Robert", adresse: "22 Blvd de la République, Lille", livreurNom: "Marc Robert", statut: "Annulé", date: "15 Oct 2023" },
-];
+
 const GereLivraisons = () => {
   // ... tes states actuels ...
     const [modalConfirm, setModalConfirm] = useState({ show: false, id: null, code: '', action: null });
     const [modalDetails, setModalDetails] = useState({ show: false, data: null });
 
-  const [livraisons, setLivraisons] = useState(mockLivraisons);//pour stocker les données des livraisons
+  const [livraisons, setLivraisons] = useState([]);//pour stocker les données des livraisons
 const [showFilters, setShowFilters] = useState(false);// afficheer les filtres oou non
-  const [searchQuery, setSearchQuery] = useState("");//pour la barre de recherche
+const [searchQuery, setSearchQuery] = useState("");//pour la barre de recherche
+const [statutFilter, setStatutFilter] = useState("all");
 
   const [loading, setLoading]= useState(true);//pour afficher un indicateur de chargement pendant la récupération des données
 
-  
+  const [statsData, setStatsData] = useState({ total: 0, enAttente: 0, reussies: 0, annulees: 0 });
 
-  const [statutFilter, setStatutFilter] = useState("all");
 
   //fonction pour recuperer les donnees des livraisons depuis l'api (GDLT-10)
-  const refreshList = async ()=> {
-    try{
-      setLoading(true);
-      const res = await axios.get('/api/livraisons');
-      setLivraisons(res.data.data || []);
-      } catch (err){
-        console.error("Erreur recuperation livraison", err);
-      }finally {
-        setLoading(false); 
-      }
-  };
+ const refreshList = async () => {
+    try {
+        setLoading(true);
+        
+        // 1. Récupérer la liste des livraisons
+        const resLivraisons = await axios.get('/api/livraisons');
+        console.log("DONNÉES REÇUES :", resLivraisons.data.data); // AJOUTE CETTE LIGNE
+        setLivraisons(resLivraisons.data.data || resLivraisons.data);
+
+        // 2. Récupérer les statistiques réelles (Route d'Oussama)
+        const resStats = await axios.get('/api/livraisons/stats');
+        setStatsData(resStats.data.data || resStats.data);
+
+    } catch (err) {
+        console.error("Erreur de connexion aux API d'Oussama :", err);
+    } finally {
+        setLoading(false);
+    }
+};
   useEffect(()=>{
     refreshList();
   },[]);
-// Filtrage des livraisons (Version cohérente avec l'équipe)
-const filteredLivraisons = livraisons.filter(item => {
-    // 1. Recherche par Code de suivi ou Nom du destinataire
-    const matchSearch = 
-        item.codeSuivi.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.destinataireNom.toLowerCase().includes(searchQuery.toLowerCase());
+   // --- LOGIQUE DE SUPPRESSION (GDLT-72) ---
+    const openDeleteModal = (id, code) => {
+        setModalConfirm({
+            show: true,
+            title: "Supprimer la livraison",
+            message: `Voulez-vous vraiment supprimer définitivement la livraison ${code} ?`,
+            type: 'danger',
+            action: () => confirmDelete(id)
+        });
+    };
 
-    // 2. Filtrage par Statut (si "all", on affiche tout, sinon on compare)
-    const matchStatut = 
-        statutFilter === "all" || 
-        item.statut.toLowerCase() === statutFilter.toLowerCase();
-
-    // On retourne l'élément seulement s'il remplit TOUTES les conditions
-    return matchSearch && matchStatut;
-});
+    const confirmDelete = async (id) => {
+        try {
+            await axios.delete(`/api/livraisons/${id}`);
+            setModalConfirm({ ...modalConfirm, show: false });
+            refreshList();
+        } catch (err) {
+            alert("Erreur lors de la suppression sur le serveur");
+        }
+    };
+// --- LOGIQUE DE FILTRAGE ---
+    const filteredLivraisons = livraisons.filter(item => {
+        const matchSearch = 
+            item.idColis?.codeSuivi?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.idColis?.destinataireNom?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchStatut = statutFilter === "all" || item.statut?.toLowerCase() === statutFilter.toLowerCase();
+        return matchSearch && matchStatut;
+    });
 // Calcule les stats dynamiquement (pour tes StatCards)
 const stats = {
     total: livraisons.length,
@@ -122,14 +137,33 @@ const stats = {
             
              
               {/* 3. Utilisation de ton nouveau composant Tableau */}
-          <LivraisonTable data={filteredLivraisons} 
-           onToggleFilters={() => setShowFilters(!showFilters)} 
-    isFilterActive={showFilters}
-          />
+          <LivraisonTable 
+                        data={filteredLivraisons} 
+                        onToggleFilters={() => setShowFilters(!showFilters)} 
+                        isFilterActive={showFilters}
+                        refreshList={refreshList}
+                        onDelete={openDeleteModal}
+                        onViewDetails={(item) => setModalDetails({ show: true, data: item })}
+                        onEdit={(item) => console.log("Edit click", item)}
+                    />
 
         </main>
       </div>
-      
+       {/* LES MODALES PROFESSIONNELLES */}
+            <ConfirmModal 
+                isOpen={modalConfirm.show}
+                onClose={() => setModalConfirm({ ...modalConfirm, show: false })}
+                onConfirm={modalConfirm.action}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                type={modalConfirm.type}
+            />
+
+            <DetailsModal 
+                isOpen={modalDetails.show}
+                onClose={() => setModalDetails({ ...modalDetails, show: false })}
+                data={modalDetails.data}
+            />
     </div>
   );
 };
