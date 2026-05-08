@@ -18,7 +18,7 @@ const DetailsModal = ({ isOpen, onClose, data }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Code Suivi</p>
-                            <p className="font-bold text-cyan-600">{data.codeSuivi}</p>
+                            <p className="font-bold text-cyan-600">{data.idColis?.codeSuivi}</p>
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Statut Actuel</p>
@@ -28,13 +28,13 @@ const DetailsModal = ({ isOpen, onClose, data }) => {
 
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Informations Destinataire</p>
-                        <p className="font-bold text-slate-800">{data.destinataireNom}</p>
+                        <p className="font-bold text-slate-800">{data.idColis?.destinataireNomComplet}</p>
                         <p className="text-sm text-slate-500 mt-1">{data.adresse}</p>
                     </div>
 
                     <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Livreur Assigné</p>
-                        <p className="text-sm font-semibold text-slate-700">{data.livreurNom || "Non encore assigné"}</p>
+                        <p className="text-sm font-semibold text-slate-700">{data.idLivreur?.nomComplet || "Non encore assigné"}</p>
                     </div>
                 </div>
 
