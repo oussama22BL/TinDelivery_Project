@@ -69,13 +69,21 @@ const LivraisonTable = ({ data, onToggleFilters, isFilterActive, refreshList, on
                                 </td>
 
                                 <td className="px-8 py-5 relative">
-                                    <button 
-                                        onClick={() => setMenuStatutOuvert(menuStatutOuvert === item._id ? null : item._id)}
-                                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border ${getStatutStyle(item.statut)} cursor-pointer transition uppercase`}
-                                    >
-                                        <span className={`inline-block w-1 h-1 rounded-full mr-1 ${item.statut === 'livrée' ? 'bg-blue-600' : 'bg-cyan-600'}`}></span>
-                                        {item.statut === 'en attente' ? 'EN COURS' : item.statut} ▼
-                                    </button>
+                                 <button 
+                                    onClick={() => {
+                                        // Si le statut est final, on ne permet pas d'ouvrir le menu
+                                        if (item.statut === 'livrée' || item.statut === 'annulée') {
+                                            onInfo("Livraison Terminée", "Le statut d'un colis livré ou annulé ne peut plus être modifié.");
+                                            return;
+                                        }
+                                        setMenuStatutOuvert(menuStatutOuvert === item._id ? null : item._id);
+                                    }}
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border ${getStatutStyle(item.statut)} 
+                                    ${(item.statut === 'livrée' || item.statut === 'annulée') ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'} transition uppercase`}
+                                >
+                                    <span className={`...`}></span>
+                                    {item.statut === 'en attente' ? 'EN COURS' : item.statut} ▼
+                                </button>
                                     {menuStatutOuvert === item._id && (
                                         <div className="absolute z-20 mt-1 w-32 bg-white border rounded-xl shadow-xl py-1 animate-in zoom-in-95">
                                             {statutsOptions.map((s) => (
