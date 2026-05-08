@@ -6,13 +6,14 @@ import StatCard from '../../components/AdminComponent/StatCard';
 import LivraisonTable from '../../components/AdminComponent/LivraisonTable';
 import ConfirmModal from '../../components/AdminComponent/ConfirmModal';
 import DetailsModal from '../../components/AdminComponent/DetailsModal';
+import EditLivraisonModal from '../../components/AdminComponent/EditLivraisonModal';
 
 
 const GereLivraisons = () => {
   // ... tes states actuels ...
     const [modalConfirm, setModalConfirm] = useState({ show: false, id: null, code: '', action: null });
     const [modalDetails, setModalDetails] = useState({ show: false, data: null });
-
+    const [modalEdit, setModalEdit] = useState({ show: false, data: null });
   const [livraisons, setLivraisons] = useState([]);//pour stocker les données des livraisons
 const [showFilters, setShowFilters] = useState(false);// afficheer les filtres oou non
 const [searchQuery, setSearchQuery] = useState("");//pour la barre de recherche
@@ -81,7 +82,16 @@ const stats = {
     reussies: livraisons.filter(l => l.statut === "Livré").length,
     annulees: livraisons.filter(l => l.statut === "Annulé").length,
 };
-
+// logique update 
+const handleUpdate = async (id, updatedData) => {
+    try {
+        await axios.patch(`/api/livraisons/${id}`, updatedData);
+        setModalEdit({ show: false, data: null });
+        refreshList(); // Mise à jour du tableau et des stats
+    } catch (err) {
+        alert("Erreur lors de la modification sur le serveur");
+    }
+};
 
   return (
     <div className='flex min-h-screen bg-slate-50'>
@@ -144,7 +154,13 @@ const stats = {
                         refreshList={refreshList}
                         onDelete={openDeleteModal}
                         onViewDetails={(item) => setModalDetails({ show: true, data: item })}
-                        onEdit={(item) => console.log("Edit click", item)}
+                        onEdit={(item) => setModalEdit({ show: true, data: item })} 
+                    />
+                    <EditLivraisonModal 
+                        isOpen={modalEdit.show}
+                        onClose={() => setModalEdit({ show: false, data: null })}
+                        deliveryData={modalEdit.data}
+                        onUpdate={handleUpdate}
                     />
 
         </main>
