@@ -79,6 +79,19 @@ const GereLivraisons = () => {
         } catch (err) { alert("Erreur modification"); }
     };
 
+    // On calcule la performance à partir des stats déjà reçues ou calculées
+const calculatePerformance = () => {
+    if (!stats.total || stats.total === 0) return 0;
+    
+    // Formule : (Livraisons Réussies / Total) * 100
+    const percentage = (stats.reussies / stats.total) * 100;
+    
+    // On arrondit à 1 chiffre après la virgule (ex: 98.2)
+    return percentage.toFixed(1);
+};
+
+const perfValue = calculatePerformance();
+
     return (
         <div className='flex min-h-screen bg-slate-50'>
             <Sidebar />
@@ -93,16 +106,20 @@ const GereLivraisons = () => {
                    {/* Prochaine étape : Les cartes statistiques et le Tableau */}
            <div className="grid grid-cols-4 gap-6 mb-8">
               <StatCard label="TOTAL EXPÉDITIONS" value={stats.total} icon="bi-box" color="text-slate-600" trend="+12%" />
-            <StatCard label="COLIS EN TRANSIT" value={stats.enAttente} icon="bi-clock" color="text-slate-600" trend="En attente" />
+            <StatCard label="COLIS EN TRANSIT" value={stats.enCours} icon="bi-clock" color="text-slate-600" trend="En cours" />
             <StatCard label="LIVRAISONS RÉUSSIES" value={stats.reussies} icon="bi-check-circle" color="text-slate-600" trend="Aujourd'hui" />
                {/* Carte Performance Spéciale (Design de la maquette) */}
             <div className="bg-[#013c58] rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                 <div className="relative z-10">
                     <p className="text-[10px] font-bold opacity-60 uppercase mb-4 tracking-wider">Performance</p>
-                    <p className="text-3xl font-bold mb-2">98.2%</p>
+                    <p className="text-3xl font-bold mb-2">{perfValue}%</p>
                     <p className="text-[10px] opacity-70">Taux de ponctualité global</p>
+                    {/* BARRE DE PROGRESSION DYNAMIQUE */}
                     <div className="w-full bg-white/20 h-1.5 rounded-full mt-4">
-                        <div className="bg-white h-full rounded-full w-[98%] transition-all duration-1000"></div>
+                        <div 
+                            className="bg-white h-full rounded-full transition-all duration-1000" 
+                            style={{ width: `${perfValue}%` }} // La barre s'adapte au pourcentage
+                        ></div>
                     </div>
                 </div>
                 {/* Petit design de fond pour la carte */}

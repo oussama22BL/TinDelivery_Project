@@ -23,6 +23,10 @@ const livraisonSchema = new mongoose.Schema({
     required: false, // pas toujours affecté dès le départ
     index: true,
   },
+  dateLivraison: {
+    type: Date,
+    default: null,   // sera rempli quand la livraison passe à "livrée"
+  },
 }, {
   timestamps: true,
 });

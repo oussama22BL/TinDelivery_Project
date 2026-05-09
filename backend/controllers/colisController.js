@@ -317,8 +317,9 @@ const assignColisToLivreur = async (req, res) => {
     const livraison = await Livraison.create({
       idColis: id,
       idLivreur,
-      dateEstimee: req.body.dateEstimee || new Date(Date.now() + 24 * 60 * 60 * 1000), // par défaut demain
-      statut: 'en attente',
+      dateEstimee:  new Date(Date.now() + 24 * 60 * 60 * 1000),
+      // dateEstimee: req.body.dateEstimee ? new Date(req.body.dateEstimee) : new Date(Date.now() + 24 * 60 * 60 * 1000), // par défaut demain
+      statut: 'en cours',
     });
 
     // --- Mise à jour du colis ---
@@ -331,8 +332,14 @@ const assignColisToLivreur = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: livraison,
       message: 'Colis assigné au livreur avec succès.',
+      livraison,
+      colis: {
+        id: colis._id,
+        codeSuivi: colis.codeSuivi,
+        status: colis.status,
+        poids: colis.poids
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

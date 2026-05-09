@@ -34,6 +34,7 @@ app.use('/api/colis', colisRoutes);
 
 app.use('/api/livreurs', livreurRoutes);
 app.use('/api/livraisons', livraisonRoutes);
+//app.use('/api/stats', require('./routes/statsRoutes'));
 
 
 // ============ GESTION DES ERREURS 404 ============
