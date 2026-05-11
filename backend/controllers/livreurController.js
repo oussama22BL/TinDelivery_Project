@@ -366,6 +366,7 @@ const getMesLivraisons = async (req, res) => {
     const [livraisons, total] = await Promise.all([
       Livraison.find(filtre)
         .populate('idColis')
+        .populate('idLivreur', 'nomComplet email telephone') // <--- AJOUTE CETTE LIGNE ICI
         .sort(sortObj)
         .skip(skip)
         .limit(limit),
