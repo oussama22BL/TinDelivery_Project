@@ -14,17 +14,25 @@ const MesLivraisons = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [statutFilter, setStatutFilter] = useState("all");
     const [showFilters, setShowFilters] = useState(false);
+     const [statsData, setStatsData] = useState({ total: 0, enAttente: 0, enCours: 0, livrees: 0 });
 
     // Modales
     const [modalConfirm, setModalConfirm] = useState({ show: false, id: null, title: '', message: '', type: 'info', action: null });
     const [modalDetails, setModalDetails] = useState({ show: false, data: null });
-
+    // 1. Récupérer les stats spécifiques du livreur
+    //const resStats = await axios.get('/api/livraisons/livreur/stats');
     // 2. Fonctions de récupération
     const refreshList = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('/api/livraisons');
-            setLivraisons(res.data.data || res.data || []);
+             // On appelle l'API des livraisons ET l'API des stats livreur d'Oussama
+            const [resLiv, resStats] = await Promise.all([
+                 axios.get('/api/livreurs/mes-livraisons'), // Pour le moment on filtre sur le front, plus tard Oussama créera /api/livraisons/mes-livraisons
+                axios.get('/api/livraisons/livreur/stats') // Route d'Oussama
+            ]);
+
+            setLivraisons(resLiv.data.data || resLiv.data || []);
+            setStatsData(resStats.data.data || resStats.data);
         } catch (err) {
             console.error("Erreur API :", err);
         } finally {
@@ -36,14 +44,20 @@ const MesLivraisons = () => {
         refreshList();
     }, []);
 
-    // 3. Logique de mise à jour du statut
-    const updateStatus = async (id, newStatus) => {
+     // 3. Logique de mise à jour du statut (UTILISATION DES ROUTES D'OUSSAMA)
+    const updateStatus = async (id, type) => {
         try {
-            await axios.patch(`/api/livraisons/${id}`, { statut: newStatus });
+            // Mapping vers les routes exactes d'Oussama
+            let endpoint = '';
+            if (type === 'livrée') endpoint = `/api/livraisons/livreur/${id}/livree`;
+            if (type === 'annulée') endpoint = `/api/livraisons/livreur/${id}/annulee`;
+
+            await axios.patch(endpoint, {});
+            
             setModalConfirm({ ...modalConfirm, show: false });
-            await refreshList();
+            await refreshList(); // Recharger les données et les compteurs
         } catch (err) {
-            alert("Erreur lors de la mise à jour");
+            alert(err.response?.data?.error || "Erreur lors de la mise à jour");
         }
     };
 
