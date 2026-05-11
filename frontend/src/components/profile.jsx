@@ -1,93 +1,89 @@
 import React, { useState } from 'react';
-import SidebarAdmin from './AdminComponent/Sidebar';
-import SidebarLivreur from './LivreurComponent/SidebarLivreur';
+import Sidebar from './Sidebar'; // Utilise le composant unique
 
 const Profile = () => {
-    // 1. DONNÉES SIMULÉES (En attendant le back d'Oussama)
-    const mockUser = {
+    // 1. DONNÉES SIMULÉES (Tu changeras 'admin' en 'livreur' pour tester l'autre vue)
+    const [user] = useState({
         _id: "69f39c3834fe5824e2b096f4",
         nomComplet: "Wassima Kella",
         email: "wassima.kella@gmail.com",
         telephone: "0796967071",
         adresse: "Hay Tayerte El Oulya, Bloc B, Rabat",
-        role: "admin", // Change en "admin" pour voir l'autre sidebar
+        role: "livreur", // Change ici pour tester : 'admin' ou 'livreur'
         status: "actif",
-        disponibilite: true,
         nombreLivraison: 12,
         createdAt: "2024-03-01T10:00:00Z"
-    };
-
-    const [user] = useState(mockUser);
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
-        nomComplet: mockUser.nomComplet,
-        email: mockUser.email,
-        telephone: mockUser.telephone,
-        adresse: mockUser.adresse
     });
 
-    const handleUpdate = (e) => {
-        e.preventDefault();
-        // Pour l'instant, on simule juste le succès
-        alert("Côté Front OK ! Les données seront envoyées quand le Backend sera prêt.");
-        setIsEditing(false);
-    };
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({ ...user });
 
     return (
         <div className="flex min-h-screen bg-[#F8FAFC]">
-            {/* Sidebar dynamique selon le rôle simulé */}
-            {user.role === 'admin' ? <SidebarAdmin /> : <SidebarLivreur />}
+            {/* ON PASSE LE ROLE DYNAMIQUEMENT À LA SIDEBAR UNIQUE */}
+            <Sidebar role={user.role} />
 
-            <div className="flex-1 ml-64 p-12">
+            <div className="flex-1 ml-64 p-12 text-left">
                 <header className="mb-10 flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800 tracking-tight text-left">Mon Profil</h1>
-                        <p className="text-slate-400 font-medium text-left">Gérez vos informations personnelles ({user.role}).</p>
+                        <h1 className="text-4xl font-black text-slate-800 tracking-tight">Mon Profil</h1>
+                        <p className="text-slate-400 font-medium">Gestion de votre compte {user.role === 'admin' ? 'Administrateur' : 'Livreur'}</p>
                     </div>
                     {!isEditing && (
-                        <button onClick={() => setIsEditing(true)} className="bg-cyan-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2">
-                            <i className="bi bi-pencil-square"></i> Modifier
+                        <button onClick={() => setIsEditing(true)} className="bg-[#0f172a] text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center gap-2">
+                            <i className="bi bi-pencil-square"></i> Modifier le profil
                         </button>
                     )}
                 </header>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                    <div className="xl:col-span-2 bg-white rounded-[32px] p-10 shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-8 mb-10 pb-10 border-b border-slate-50 text-left">
-                            <div className="w-24 h-24 rounded-[28px] bg-cyan-900 text-white flex items-center justify-center text-3xl font-black shadow-lg uppercase">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+                    <div className="xl:col-span-2 bg-white rounded-[40px] p-10 shadow-sm border border-slate-100">
+                        {/* Header interne du profil */}
+                        <div className="flex items-center gap-8 mb-10 pb-10 border-b border-slate-50">
+                            <div className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-cyan-500 to-cyan-700 text-white flex items-center justify-center text-3xl font-black shadow-lg">
                                 {user.nomComplet.charAt(0)}
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-slate-800 text-left">{user.nomComplet}</h2>
-                                <p className="text-cyan-600 font-bold text-xs uppercase tracking-widest text-left">{user.role}</p>
+                                <h2 className="text-3xl font-black text-slate-800">{user.nomComplet}</h2>
+                                <span className="inline-block mt-1 px-3 py-1 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-100">
+                                    {user.role}
+                                </span>
                             </div>
                         </div>
 
-                        <form onSubmit={handleUpdate}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                                <ProfileField label="Nom Complet" value={formData.nomComplet} isEditing={isEditing} onChange={(val) => setFormData({...formData, nomComplet: val})} icon="bi-person" />
-                                <ProfileField label="Adresse Email" value={formData.email} isEditing={isEditing} onChange={(val) => setFormData({...formData, email: val})} icon="bi-envelope" />
-                                <ProfileField label="Téléphone" value={formData.telephone} isEditing={isEditing} onChange={(val) => setFormData({...formData, telephone: val})} icon="bi-telephone" />
-                                <ProfileField label="Adresse Résidentielle" value={formData.adresse} isEditing={isEditing} onChange={(val) => setFormData({...formData, adresse: val})} icon="bi-geo-alt" />
-                            </div>
-
-                            {isEditing && (
-                                <div className="mt-10 flex gap-4">
-                                    <button type="submit" className="bg-cyan-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-cyan-700 transition-all">Sauvegarder</button>
-                                    <button type="button" onClick={() => setIsEditing(false)} className="bg-slate-100 text-slate-500 px-8 py-3 rounded-xl font-bold">Annuler</button>
-                                </div>
-                            )}
+                        {/* Formulaire */}
+                        <form className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <ProfileField label="Nom Complet" value={formData.nomComplet} isEditing={isEditing} onChange={(val) => setFormData({...formData, nomComplet: val})} icon="bi-person" />
+                            <ProfileField label="Email" value={formData.email} isEditing={isEditing} onChange={(val) => setFormData({...formData, email: val})} icon="bi-envelope" />
+                            <ProfileField label="Téléphone" value={formData.telephone} isEditing={isEditing} onChange={(val) => setFormData({...formData, telephone: val})} icon="bi-telephone" />
+                            <ProfileField label="Adresse" value={formData.adresse} isEditing={isEditing} onChange={(val) => setFormData({...formData, adresse: val})} icon="bi-geo-alt" />
                         </form>
                     </div>
 
-                    <div className="space-y-6 text-left">
-                        <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Stats Chauffeur</p>
+                    {/* Bloc Stats (À droite) */}
+                    <div className="space-y-6">
+                        {/* ON N'AFFICHE CE BLOC QUE POUR LE LIVREUR */}
+                        {user.role === 'livreur' && (
+                            <div className="bg-[#013c58] p-8 rounded-[35px] text-white shadow-xl relative overflow-hidden">
+                                <p className="text-[10px] font-bold opacity-60 uppercase mb-6">Performances</p>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-3xl font-black">{user.nombreLivraison}</p>
+                                        <p className="text-[10px] opacity-60 uppercase font-bold">Livraisons effectuées</p>
+                                    </div>
+                                    <div className="pt-4 border-t border-white/10">
+                                        <p className="text-3xl font-black">98%</p>
+                                        <p className="text-[10px] opacity-60 uppercase font-bold">Satisfaction Client</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm">
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-6">Détails Système</p>
                             <div className="space-y-6">
-                                <StaticInfo label="Identifiant" value={`TD-${user._id.slice(-6).toUpperCase()}`} />
-                                <StaticInfo label="Statut" value={user.status} color="text-green-600" />
-                                <StaticInfo label="Livraisons" value={user.nombreLivraison} />
-                                <StaticInfo label="Date d'inscription" value={new Date(user.createdAt).toLocaleDateString()} />
+                                <StaticInfo label="Identifiant" value={`ID-${user._id.slice(-6).toUpperCase()}`} />
+                                <StaticInfo label="Inscrit le" value={new Date(user.createdAt).toLocaleDateString()} />
                             </div>
                         </div>
                     </div>
@@ -97,23 +93,24 @@ const Profile = () => {
     );
 };
 
+// Composants internes pour la propreté
 const ProfileField = ({ label, value, isEditing, onChange, icon }) => (
     <div className="space-y-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <i className={`${icon}`}></i> {label}
+        <label className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2">
+            <i className={icon}></i> {label}
         </label>
         {isEditing ? (
-            <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-cyan-500" value={value} onChange={(e) => onChange(e.target.value)} />
+            <input className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold" value={value} onChange={(e) => onChange(e.target.value)} />
         ) : (
             <p className="text-sm font-bold text-slate-700 p-3 bg-slate-50/50 rounded-xl">{value}</p>
         )}
     </div>
 );
 
-const StaticInfo = ({ label, value, color = "text-slate-800" }) => (
+const StaticInfo = ({ label, value }) => (
     <div>
-        <p className="text-[9px] font-black text-slate-300 uppercase leading-none mb-1">{label}</p>
-        <p className={`text-sm font-bold ${color}`}>{value}</p>
+        <p className="text-[9px] font-black text-slate-300 uppercase mb-1">{label}</p>
+        <p className="text-sm font-bold text-slate-700">{value}</p>
     </div>
 );
 

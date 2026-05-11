@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../../api/axios';
-import Sidebar from '../../components/AdminComponent/Sidebar';
+import Sidebar from '../../components/Sidebar';
 import LivreurForm from '../../components/AdminComponent/LivreurForm';
 
 const GererLivreurs = () => {
@@ -89,7 +89,7 @@ const GererLivreurs = () => {
 
     return (
         <div className="flex min-h-screen bg-slate-50">
-            <Sidebar />
+             <Sidebar role="admin" />
 
             <div className="flex-1 ml-64">
                 {/* Header */}

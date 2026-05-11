@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/AdminComponent/Sidebar';
-import TopBar from '../../components/AdminComponent/TopBar';
+import Sidebar from '../../components/Sidebar';
+import TopBar from '../../components/TopBar';
 import axios from '../../api/axios';
 import StatCard from '../../components/AdminComponent/StatCard';
 import LivraisonTable from '../../components/AdminComponent/LivraisonTable';
@@ -94,7 +94,7 @@ const perfValue = calculatePerformance();
 
     return (
         <div className='flex min-h-screen bg-slate-50'>
-            <Sidebar />
+            <Sidebar role="admin" />
             <div className='flex-1 ml-64'>
                 <TopBar searchTerm={searchQuery} setSearchTerm={setSearchQuery}/>
                 <main className='p-8'>
