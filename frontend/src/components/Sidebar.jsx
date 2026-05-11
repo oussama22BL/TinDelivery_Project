@@ -1,6 +1,7 @@
 import {React, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ConfirmModal from './AdminComponent/ConfirmModal';
+import axios from "../api/axios";
 const Sidebar = ({ role = "admin" }) => { // Par défaut admin pour tes tests
     const location = useLocation();
     const navigate = useNavigate();
@@ -33,13 +34,20 @@ const Sidebar = ({ role = "admin" }) => { // Par défaut admin pour tes tests
     // On choisit quel menu afficher
     const menuItems = role === "admin" ? adminMenu : livreurMenu;
     // 2. Fonction qui s'exécute après confirmation
-    const handleConfirmLogout = () => {
+   const handleConfirmLogout = async () => {
+    try {
+        // Appeler l'API de logout d'Oussama
+        await axios.post('/api/auth/logout'); 
+    } catch (err) {
+        console.error("Erreur lors de la déconnexion serveur");
+    } finally {
+        // Dans tous les cas, on nettoie le navigateur
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setShowLogoutModal(false);
         navigate('/');
-    };
-
+    }
+};
     return (
         <div className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col fixed left-0 top-0 z-20">
             

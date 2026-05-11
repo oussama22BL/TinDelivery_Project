@@ -18,7 +18,10 @@ const Connexion = () => {
 
         try {
             // 1. Appel API Login (Point de terminaison d'Oussama)
-            const res = await axios.post('/api/login', { email, password });
+            const res = await axios.post('/api/auth/login', { 
+              email,
+              motDePasse: password
+             });
             
             // 2. Stockage du Token et des infos (localStorage)
             const { token, user } = res.data;
@@ -132,7 +135,7 @@ const Connexion = () => {
                     <p className="text-[9px] font-bold text-slate-300 uppercase">© 2024 TinDelivery. La Clarté Architecturale.</p>
                 </div>
             </div>
-            
+
         </div>
     );
 };
