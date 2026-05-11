@@ -128,6 +128,99 @@ exports.deleteLivraison = async (req, res) => {
   }
 };
 
+// Marquer comme livrée pour livreur
+exports.markLivraisonLivree = async (req, res) => {
+  try {
+    const livraison = await Livraison.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+    // Vérifier que le livreur connecté est bien assigné
+    const livreurId = req.user.id || req.user._id; // Support id et _id
+    if (livraison.idLivreur.toString() !== livreurId) {
+      return res.status(403).json({ error: 'Vous n’êtes pas assigné à cette livraison' });
+    }
+
+    // Vérifier le statut actuel (ne peut pas être déjà livrée ou annulée)
+    if (['livrée', 'annulée'].includes(livraison.statut)) {
+      return res.status(400).json({ error: 'Cette livraison est déjà terminée' });
+    }
+
+    // Mise à jour du statut et de la date réelle
+    livraison.statut = 'livrée';
+    livraison.dateLivraison = req.body.dateLivraison ? new Date(req.body.dateLivraison) : new Date();
+    await livraison.save();
+
+    // Mise à jour du colis associé
+    await Colis.findByIdAndUpdate(livraison.idColis, {
+      status: 'livré',
+      dateLivraison: livraison.dateLivraison
+    });
+
+    // (Optionnel) Incrémenter un compteur de livraisons réussies du livreur
+    // const livreurId = req.user.id || req.user._id;
+    // await User.findByIdAndUpdate(livreurId, { $inc: { livraisonsReussies: 1 } });
+
+    res.json({ success: true, data: livraison });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Marquer comme annulée pour livreur
+exports.markLivraisonAnnulee = async (req, res) => {
+  try {
+    const livraison = await Livraison.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+    // Vérifier que le livreur connecté est bien assigné
+    const livreurId = req.user.id || req.user._id; // Support id et _id
+    if (livraison.idLivreur.toString() !== livreurId) {
+      return res.status(403).json({ error: 'Vous n’êtes pas assigné à cette livraison' });
+    }
+
+    if (['livrée', 'annulée'].includes(livraison.statut)) {
+      return res.status(400).json({ error: 'Cette livraison est déjà terminée' });
+    }
+
+    livraison.statut = 'annulée';
+    livraison.motifAnnulation = req.body.motif || 'Non spécifié';
+    await livraison.save();
+
+    // Mettre à jour le colis
+    await Colis.findByIdAndUpdate(livraison.idColis, { status: 'annulé' });
+
+    // Décrémenter le compteur de livraisons en cours du livreur
+    
+    await User.findByIdAndUpdate(livreurId, { $inc: { nombreLivraison: -1 } });
+
+    res.json({ success: true, data: livraison });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getLivreurStats = async (req, res) => {
+  try {
+    // Utiliser req.user.id (JWT) ou req.user._id (fallback)
+    const idLivreur = req.user.id || req.user._id;
+
+    const [total, enCours, livrees, annulees] = await Promise.all([
+      Livraison.countDocuments({ idLivreur }),
+      Livraison.countDocuments({ idLivreur, statut: { $in: ['en attente', 'en cours'] } }),
+      Livraison.countDocuments({ idLivreur, statut: 'livrée' }),
+      Livraison.countDocuments({ idLivreur, statut: 'annulée' })
+    ]);
+
+    res.json({
+      success: true,
+      stats: { total, enCours, livrees, annulees }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 
 

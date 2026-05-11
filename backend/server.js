@@ -8,6 +8,7 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 const colisRoutes = require('./routes/colisRoutes');
 const livraisonRoutes = require('./routes/livraisonRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -30,11 +31,16 @@ app.get('/', (req, res) => {
 // ============ API ROUTES ============
 // On importe et on utilise les routes une seule fois
 const livreurRoutes = require('./routes/livreurRoutes');
-app.use('/api/colis', colisRoutes);
 
+
+// Routes d'authentification (publiques)
+app.use('/api/auth', authRoutes);
+
+// Routes protégées
+app.use('/api/colis', colisRoutes);
 app.use('/api/livreurs', livreurRoutes);
 app.use('/api/livraisons', livraisonRoutes);
-//app.use('/api/stats', require('./routes/statsRoutes'));
+
 
 
 // ============ GESTION DES ERREURS 404 ============
