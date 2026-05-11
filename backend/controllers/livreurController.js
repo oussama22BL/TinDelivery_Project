@@ -338,6 +338,55 @@ const changeStatus = async (req, res) => {
   }
 };
 
+const getMesLivraisons = async (req, res) => {
+  try {
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Filtre par statut (optionnel)
+    const livreurId = req.user.id || req.user._id; // Support id et _id
+    const filtre = { idLivreur: livreurId };
+    if (req.query.statut) {
+      const statutsValides = ['en attente', 'en cours', 'livrée', 'annulée'];
+      if (!statutsValides.includes(req.query.statut)) {
+        return res.status(400).json({ error: 'Statut invalide' });
+      }
+      filtre.statut = req.query.statut;
+    }
+
+    // Tri (par date estimée ascendante par défaut)
+    const sort = req.query.sort || 'dateEstimee';
+    const order = sort.startsWith('-') ? -1 : 1;
+    const sortField = sort.replace(/^-/, '');
+    const sortObj = {};
+    sortObj[sortField] = order;
+
+    const [livraisons, total] = await Promise.all([
+      Livraison.find(filtre)
+        .populate('idColis')
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit),
+      Livraison.countDocuments(filtre)
+    ]);
+
+    res.json({
+      success: true,
+      data: livraisons,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 
 
 
@@ -350,6 +399,7 @@ module.exports = {
     getLivreursByDisponibilite ,
     deleteLivreur,
     updateLivreur,
-    changeStatus
+    changeStatus,
+    getMesLivraisons
 };
 
