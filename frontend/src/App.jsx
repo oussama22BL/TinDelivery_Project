@@ -4,6 +4,8 @@ import GererLivreurs from './pages/AdminPages/GererLivreurs';
 import GererColis from './pages/AdminPages/GererColis';
 import Profile from './components/profile';// Vérifie bien le chemin !
 import GererLivraisons from './pages/AdminPages/GereLivraisons';
+import MesLivraisons from './pages/LivreurPages/MesLivraisons';
+import Connexion from './pages/Connexion';
 
 function App() {
   return (
@@ -19,10 +21,13 @@ function App() {
         <Route path="/admin/livraisons" element={<GererLivraisons />} />
         
         {/* Tu peux ajouter une route par défaut pour tester */}
-        <Route path="/" element={<h1>Bienvenue sur TinDelivery</h1>} />
+        <Route path="/" element={<Connexion />} />
 
         {/* NOUVELLE ROUTE POUR LE PROFIL */}
         <Route path="/profile" element={<Profile />} />
+
+        {/* Cette ligne est celle qui permet d'afficher ta page */}
+        <Route path="/livreur/meslivraison" element={<MesLivraisons />} />
 
       </Routes>
     </Router>
