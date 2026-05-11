@@ -199,6 +199,28 @@ exports.markLivraisonAnnulee = async (req, res) => {
   }
 };
 
+exports.getLivreurStats = async (req, res) => {
+  try {
+    // Utiliser req.user.id (JWT) ou req.user._id (fallback)
+    const idLivreur = req.user.id || req.user._id;
+
+    const [total, enCours, livrees, annulees] = await Promise.all([
+      Livraison.countDocuments({ idLivreur }),
+      Livraison.countDocuments({ idLivreur, statut: { $in: ['en attente', 'en cours'] } }),
+      Livraison.countDocuments({ idLivreur, statut: 'livrée' }),
+      Livraison.countDocuments({ idLivreur, statut: 'annulée' })
+    ]);
+
+    res.json({
+      success: true,
+      stats: { total, enCours, livrees, annulees }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 
 
 
