@@ -21,10 +21,7 @@ const TopBar = ({ searchTerm, setSearchTerm }) => {
 
             {/* Profil & Settings (Exactement comme demandé) */}
             <div className="flex items-center gap-4">
-                {/* Icône Gear (Settings) */}
-                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                    <i className="bi bi-gear w-5 h-5"></i>
-                </button>
+               
                 
                 {/* Lien Profil avec initiales "AD" et dégradé Cyan */}
                 <Link 
