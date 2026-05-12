@@ -3,6 +3,7 @@ const Colis = require('../models/Colis');
 const Livraison = require('../models/Livraison');
 const User = require('../models/User');
 const { sendTrackingEmail } = require("../services/emailService");
+const PositionColis = require('../models/PositionColis'); 
 
 /**
  * @desc    Créer un nouveau colis
@@ -272,30 +273,29 @@ const deleteColis = async (req, res) => {
 };
 
 
-
 const assignColisToLivreur = async (req, res) => {
   try {
     const { id } = req.params;
     const { idLivreur } = req.body;
 
-    // --- Vérifier que le colis existe ---
+    // 1. Vérifier que le colis existe
     const colis = await Colis.findById(id);
     if (!colis) {
       return res.status(404).json({ success: false, error: 'Colis introuvable' });
     }
 
-    // --- Vérifier le livreur ---
+    // 2. Vérifier le livreur et son rôle
     const livreur = await User.findOne({ _id: idLivreur, role: 'livreur' });
     if (!livreur) {
       return res.status(404).json({ success: false, error: 'Livreur introuvable' });
     }
 
-    // --- Vérifier la disponibilité ---
+    // 3. Vérifier la disponibilité du livreur
     if (!livreur.disponibilite) {
       return res.status(400).json({ success: false, error: 'Ce livreur n’est pas disponible actuellement.' });
     }
 
-    // --- Vérifier la limite journalière de 10 livraisons ---
+    // 4. Limite journalière (10 livraisons max)
     const debutJour = new Date();
     debutJour.setHours(0, 0, 0, 0);
     const finJour = new Date();
@@ -313,32 +313,40 @@ const assignColisToLivreur = async (req, res) => {
       });
     }
 
-    // --- Créer la livraison ---
+    // 5. Créer l'enregistrement de Livraison
     const livraison = await Livraison.create({
       idColis: id,
       idLivreur,
-      dateEstimee:  new Date(Date.now() + 24 * 60 * 60 * 1000),
-      // dateEstimee: req.body.dateEstimee ? new Date(req.body.dateEstimee) : new Date(Date.now() + 24 * 60 * 60 * 1000), // par défaut demain
+      dateEstimee: new Date(Date.now() + 24 * 60 * 60 * 1000), // Demain par défaut
       statut: 'en cours',
     });
 
-    // --- Mise à jour du colis ---
+    // 6. INITIALISATION GÉOGRAPHIQUE (Agence Tinghir)
+    // Cette étape permet à la carte du client d'afficher un point dès l'assignation
+    await PositionColis.create({
+      latitude: 31.5147, 
+      longitude: -5.5323,
+      libelleEtape: "Colis préparé à l'agence principale (Tinghir)",
+      statut: 'en attente',
+      idColis: id
+    });
+    
+    // 7. Mise à jour du statut du colis
     colis.status = 'en cours';
     await colis.save();
 
-    // --- Mise à jour du compteur du livreur (optionnel mais cohérent) ---
+    // 8. Mise à jour des stats du livreur
     livreur.nombreLivraison = (livreur.nombreLivraison || 0) + 1;
     await livreur.save();
 
     res.status(201).json({
       success: true,
-      message: 'Colis assigné au livreur avec succès.',
+      message: 'Colis assigné et position initialisée à Tinghir.',
       livraison,
       colis: {
         id: colis._id,
         codeSuivi: colis.codeSuivi,
-        status: colis.status,
-        poids: colis.poids
+        status: colis.status
       }
     });
   } catch (error) {
