@@ -46,8 +46,6 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
       }
     }
   };
-
-  // Ouvrir la popup d'assignation
   const handleOpenAssignPopup = (colis) => {
     setSelectedColisForAssign(colis);
     setShowAssignPopup(true);
@@ -127,13 +125,18 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
                     >
                       <i className="bi bi-trash"></i>
                     </button>
-                    <button
-                      onClick={() => handleOpenAssignPopup(colis)}
-                      className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                      title="Assigner"
-                    >
-                      <i className="bi bi-person-plus"></i>
-                    </button>
+                   <button
+                     onClick={() => handleOpenAssignPopup(colis)}
+                      disabled={colis.statut !== 'EN ATTENTE'}
+                       className={`p-2 rounded-lg transition-colors ${
+                        colis.statut === 'EN ATTENTE'
+                     ? 'text-amber-600 hover:bg-amber-50 cursor-pointer'
+                  : 'text-gray-300 cursor-not-allowed'
+                 }`}
+            title={colis.statut === 'EN ATTENTE' ? 'Assigner un livreur' : 'Assignation non disponible (colis déjà livré, annulé ou en cours)'}
+>
+  <i className="bi bi-person-plus"></i>
+</button>
                     <button
                       onClick={() => {
                         alert(`Détails du colis ${colis.code}\n\n` +

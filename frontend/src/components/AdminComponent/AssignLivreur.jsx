@@ -103,12 +103,12 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
               className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               required
             >
-              <option value="">-- Choisir un livreur --</option>
+              <option value=""> Choisir un livreur </option>
               {livreurs.map((livreur) => (
                 <option key={livreur.id} value={livreur.id}>
                   {livreur.nom} - {livreur.telephone}
                   {livreur.nbLivraisonsAujourdhui !== undefined && 
-                    ` (${livreur.nbLivraisonsAujourdhui}/5 livraisons aujourd'hui)`
+                    ` (${livreur.nbLivraisonsAujourdhui}/10 livraisons aujourd'hui)`
                   }
                 </option>
               ))}
