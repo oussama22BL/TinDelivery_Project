@@ -6,6 +6,7 @@ import Profile from './components/profile';// Vérifie bien le chemin !
 import GererLivraisons from './pages/AdminPages/GereLivraisons';
 import MesLivraisons from './pages/LivreurPages/MesLivraisons';
 import Connexion from './pages/Connexion';
+import Dashboard from './pages/AdminPages/Dashboard';
 
 function App() {
   return (
@@ -25,6 +26,8 @@ function App() {
 
         {/* NOUVELLE ROUTE POUR LE PROFIL */}
         <Route path="/profile" element={<Profile />} />
+         {/* Route pour dashboard  */}
+        <Route path="/admin/dashboard" element={<Dashboard />} />
 
         {/* Cette ligne est celle qui permet d'afficher ta page */}
         <Route path="/livreur/meslivraison" element={<MesLivraisons />} />
