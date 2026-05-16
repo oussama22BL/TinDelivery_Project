@@ -143,6 +143,7 @@ const updateLivreur = async (req, res) => {
       'email',
       'telephone',
       'adresse',
+      'motDePasse'
     ];
 
     const filteredUpdates = {};
