@@ -323,14 +323,15 @@ const assignColisToLivreur = async (req, res) => {
 
     // 6. INITIALISATION GÉOGRAPHIQUE (Agence Tinghir)
     // Cette étape permet à la carte du client d'afficher un point dès l'assignation
-    await PositionColis.create({
-      latitude: 31.5147, 
-      longitude: -5.5323,
-      libelleEtape: "Colis préparé à l'agence principale (Tinghir)",
-      statut: 'en attente',
-      idColis: id
-    });
     
+    await PositionColis.create({
+        latitude: 31.5173, // Ton agence réelle à Tinghir
+        longitude: -5.5348,
+        libelleEtape: "Colis en attente à l'Agence Centrale (Tinghir)",
+        statut: 'en cours',
+        idColis: id
+    });
+        
     // 7. Mise à jour du statut du colis
     colis.status = 'en cours';
     await colis.save();
