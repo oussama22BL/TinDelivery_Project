@@ -328,7 +328,7 @@ const assignColisToLivreur = async (req, res) => {
         latitude: 31.5173, // Ton agence réelle à Tinghir
         longitude: -5.5348,
         libelleEtape: "Colis en attente à l'Agence Centrale (Tinghir)",
-        statut: 'en cours',
+        statut: 'en attente',
         idColis: id
     });
         
@@ -358,61 +358,31 @@ const assignColisToLivreur = async (req, res) => {
 const trackColis = async (req, res) => {
   try {
     const { codeSuivi } = req.params;
-
-    // 1. Trouver le colis par son code
     const colis = await Colis.findOne({ codeSuivi });
 
-    if (!colis) {
-      return res.status(404).json({ 
-        success: false, 
-        error: "Désolé, ce code de suivi n'est pas reconnu par notre système." 
-      });
-    }
+    if (!colis) return res.status(404).json({ success: false, error: "Code invalide" });
 
-    // 2. Trouver la livraison associée pour avoir les infos du livreur et la date estimée
-    // On utilise populate pour récupérer le nom et le tel du livreur
-    const livraison = await Livraison.findOne({ idColis: colis._id })
-      .populate('idLivreur', 'nomComplet telephone email');
+    const livraison = await Livraison.findOne({ idColis: colis._id }).populate('idLivreur', 'nomComplet');
+    
+    // ON FORCE LE TRI PAR DATE DÉCROISSANTE POUR AVOIR LA POSITION LA PLUS RÉCENTE
+    const position = await PositionColis.findOne({ idColis: colis._id }).sort({ createdAt: -1 });
 
-    // 3. Construction de l'historique (Timeline) basé sur les données réelles
-    // Cela correspond au design de ta page ClientDashboard
-    const historique = [
-      { 
-        status: "Expédition ramassée", 
-        date: new Date(colis.createdAt).toLocaleDateString('fr-FR'), 
-        location: "Entrepôt TinDelivery", 
-        done: true 
-      },
-      { 
-        status: "En transit vers la destination", 
-        date: colis.status !== 'en attente' ? "Confirmé" : "En attente", 
-        location: "Centre de tri local", 
-        done: colis.status !== 'en attente' 
-      },
-      { 
-        status: "Livraison prévue", 
-        date: livraison ? new Date(livraison.dateEstimee).toLocaleDateString('fr-FR') : "À définir", 
-        location: colis.destinataireAdresse, 
-        done: colis.status === 'livrée' 
-      }
-    ];
+    // Log pour vérifier dans ton terminal ce que le serveur envoie
+    console.log("Position envoyée au front :", position.latitude, position.longitude);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       colis,
       livraison,
-      historique
+      position, // C'est cette position que le front va utiliser
+      historique: [
+        { status: "EXPÉDITION RAMASSÉE", location: "AGENCE TINGHIR", done: true },
+        { status: "EN TRANSIT", location: "SECTEUR URBAIN", done: colis.status !== 'en attente' },
+        { status: "LIVRÉE", location: colis.destinataireAdresse, done: (colis.status === 'livré' || colis.status === 'livrée' || colis.status === 'annulé') }
+      ]
     });
-
-  } catch (error) {
-    return res.status(500).json({ 
-      success: false, 
-      error: "Erreur serveur lors de la récupération du suivi." 
-    });
-  }
+  } catch (error) { res.status(500).json({ error: error.message }); }
 };
-
-
 module.exports = {
   createColis,
   getAllColis,
