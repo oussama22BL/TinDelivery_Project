@@ -1,6 +1,10 @@
+
 const Livraison = require('../models/Livraison');
 const User = require('../models/User');
 const Colis = require('../models/Colis');
+const axios = require('axios'); // Pour appeler le service de géocodage
+const PositionColis = require('../models/PositionColis');
+
 
 // Récupérer toutes les livraisons avec pagination
 exports.getAllLivraisons = async (req, res) => {
@@ -128,6 +132,21 @@ exports.deleteLivraison = async (req, res) => {
   }
 };
 
+// Fonction utilitaire pour obtenir les vraies coordonnées à Tinghir
+const getRealCoordinates = async (adresse) => {
+  try {
+    const query = `${adresse}, Tinghir, Maroc`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+    const response = await axios.get(url, { headers: { 'User-Agent': 'TinDelivery-Project' } });
+    if (response.data && response.data.length > 0) {
+      return { lat: parseFloat(response.data[0].lat), lng: parseFloat(response.data[0].lon) };
+    }
+    return { lat: 31.5147, lng: -5.5323 }; // Centre de Tinghir par défaut
+  } catch (error) {
+    return { lat: 31.5147, lng: -5.5323 };
+  }
+};
+
 // Marquer comme livrée pour livreur
 exports.markLivraisonLivree = async (req, res) => {
   try {
@@ -155,10 +174,19 @@ exports.markLivraisonLivree = async (req, res) => {
       status: 'livré',
       dateLivraison: livraison.dateLivraison
     });
-
-    // (Optionnel) Incrémenter un compteur de livraisons réussies du livreur
-    // const livreurId = req.user.id || req.user._id;
-    // await User.findByIdAndUpdate(livreurId, { $inc: { livraisonsReussies: 1 } });
+    
+     // AJOUT : INSERTION DYNAMIQUE DANS POSITION COLIS
+    const colisData = await Colis.findById(livraison.idColis);
+    if (colisData) {
+        const coords = await getRealCoordinates(colisData.destinataireAdresse);
+        await PositionColis.create({
+            latitude: coords.lat,
+            longitude: coords.lng,
+            libelleEtape: `Livré avec succès à : ${colisData.destinataireAdresse}`,
+            statut: 'livré',
+            idColis: livraison.idColis
+        });
+    }
 
     res.json({ success: true, data: livraison });
   } catch (err) {
