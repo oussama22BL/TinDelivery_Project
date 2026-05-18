@@ -6,7 +6,7 @@ import Profile from './components/profile';// Vérifie bien le chemin !
 import GererLivraisons from './pages/AdminPages/GereLivraisons';
 import MesLivraisons from './pages/LivreurPages/MesLivraisons';
 import Connexion from './pages/Connexion';
-import Dashboard from './pages/AdminPages/Dashboard';
+import ClientDashboard from './pages/ClientDashboard';
 
 function App() {
   return (
@@ -31,6 +31,9 @@ function App() {
 
         {/* Cette ligne est celle qui permet d'afficher ta page */}
         <Route path="/livreur/meslivraison" element={<MesLivraisons />} />
+
+        {/* Page de Suivi Client (La nouvelle page) */}
+        <Route path="/suivi" element={<ClientDashboard />} />
 
       </Routes>
     </Router>

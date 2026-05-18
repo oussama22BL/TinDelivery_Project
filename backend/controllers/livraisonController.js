@@ -1,6 +1,26 @@
+
 const Livraison = require('../models/Livraison');
 const User = require('../models/User');
 const Colis = require('../models/Colis');
+const axios = require('axios'); // Pour appeler le service de géocodage
+const PositionColis = require('../models/PositionColis');
+
+
+// Fonction utilitaire pour le géocodage à Tinghir
+const getRealCoordinates = async (adresse) => {
+  try {
+    const query = `${adresse}, Tinghir, Maroc`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+    const response = await axios.get(url, { headers: { 'User-Agent': 'TinDelivery-Project' } });
+    if (response.data && response.data.length > 0) {
+      return { lat: parseFloat(response.data[0].lat), lng: parseFloat(response.data[0].lon) };
+    }
+    return { lat: 31.5120, lng: -5.5360 }; // Position de secours à Tinghir
+  } catch (error) {
+    return { lat: 31.5147, lng: -5.5323 };
+  }
+};
+
 
 // Récupérer toutes les livraisons avec pagination
 exports.getAllLivraisons = async (req, res) => {
@@ -131,34 +151,39 @@ exports.deleteLivraison = async (req, res) => {
 // Marquer comme livrée pour livreur
 exports.markLivraisonLivree = async (req, res) => {
   try {
-    const livraison = await Livraison.findById(req.params.id);
+    // ON AJOUTE .populate('idColis') pour avoir l'adresse de destination
+    const livraison = await Livraison.findById(req.params.id).populate('idColis');
     if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
 
-    // Vérifier que le livreur connecté est bien assigné
-    const livreurId = req.user.id || req.user._id; // Support id et _id
+    const livreurId = req.user.id || req.user._id;
     if (livraison.idLivreur.toString() !== livreurId) {
-      return res.status(403).json({ error: 'Vous n’êtes pas assigné à cette livraison' });
+      return res.status(403).json({ error: 'Non autorisé' });
     }
 
-    // Vérifier le statut actuel (ne peut pas être déjà livrée ou annulée)
     if (['livrée', 'annulée'].includes(livraison.statut)) {
       return res.status(400).json({ error: 'Cette livraison est déjà terminée' });
     }
 
-    // Mise à jour du statut et de la date réelle
+    // 1. Mise à jour statut (Féminin pour livraison)
     livraison.statut = 'livrée';
-    livraison.dateLivraison = req.body.dateLivraison ? new Date(req.body.dateLivraison) : new Date();
+    livraison.dateLivraison = new Date();
     await livraison.save();
 
-    // Mise à jour du colis associé
-    await Colis.findByIdAndUpdate(livraison.idColis, {
+    // 2. Mise à jour colis (Masculin pour colis)
+    await Colis.findByIdAndUpdate(livraison.idColis._id, {
       status: 'livré',
       dateLivraison: livraison.dateLivraison
     });
 
-    // (Optionnel) Incrémenter un compteur de livraisons réussies du livreur
-    // const livreurId = req.user.id || req.user._id;
-    // await User.findByIdAndUpdate(livreurId, { $inc: { livraisonsReussies: 1 } });
+    // 3. INSERTION GPS POUR FAIRE BOUGER LE CAMION
+    const coords = await getRealCoordinates(livraison.idColis.destinataireAdresse);
+    await PositionColis.create({
+        latitude: coords.lat,
+        longitude: coords.lng,
+        libelleEtape: `Colis livré à : ${livraison.idColis.destinataireAdresse}`,
+        statut: 'livré',
+        idColis: livraison.idColis._id
+    });
 
     res.json({ success: true, data: livraison });
   } catch (err) {

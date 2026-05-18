@@ -1,7 +1,9 @@
 // routes/colisRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createColis, getAllColis, updateColis,deleteColis, assignColisToLivreur  } = require('../controllers/colisController');
+const { createColis, getAllColis, updateColis,deleteColis, assignColisToLivreur, trackColis } = require('../controllers/colisController');
+
+
 
 /**
  * @route   POST /api/colis
@@ -23,5 +25,9 @@ router.delete('/:id', deleteColis);
 
 // Route pour assigner un colis à un livreur
 router.post('/:id/assign', assignColisToLivreur);
+
+
+// ROUTE PUBLIQUE (Pas de middleware de sécurité ici)
+router.get('/track/:codeSuivi', trackColis);
 
 module.exports = router;
