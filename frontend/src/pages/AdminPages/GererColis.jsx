@@ -5,6 +5,8 @@ import Sidebar from '../../components/Sidebar';
 import ColisForm from '../../components/AdminComponent/ColisForm';
 import ColisTable from '../../components/AdminComponent/ColisTable';
 import TopBar from '../../components/TopBar';
+import ColisDetailsModal from '../../components/AdminComponent/ColisDetailsModal';
+import ConfirmModal from '../../components/AdminComponent/ConfirmModal';
 
 const GererColis = () => {
   const [colis, setColis] = useState([]);
@@ -13,6 +15,48 @@ const GererColis = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingColis, setEditingColis] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedColis, setSelectedColis] = useState(null);
+  const [modalConfirm, setModalConfirm] = useState({
+    show: false,
+    title: '',
+    message: '',
+    type: 'info',
+    action: null,
+  });
+  // --- 1. FONCTION POUR OUVRIR LA MODALE ---
+  const handleViewDetails = (item) => {
+    setSelectedColis(item);
+    setShowDetails(true);
+  };
+  // 2. LOGIQUE DE STATUT PRO (Remplacement de window.confirm)
+    const openStatusModal = (id, newStatut, oldStatut) => {
+        setModalConfirm({
+            show: true,
+            title: "Changer le statut",
+            message: `Voulez-vous passer le colis du statut "${oldStatut}" à "${newStatut}" ?`,
+            type: 'info',
+            action: () => confirmUpdateStatus(id, newStatut)
+        });
+    };
+
+    const confirmUpdateStatus = async (id, newStatut) => {
+        try {
+            await axios.put(`/api/colis/${id}`, { status: newStatut.toLowerCase() });
+            setModalConfirm({ ...modalConfirm, show: false });
+            refreshList();
+        } catch (error) { console.error(error); }
+    };
+    // 1. Ajoute cette fonction dans GererColis.jsx
+    const showSuccessModal = (message) => {
+        setModalConfirm({
+            show: true,
+            title: "Succès !",
+            message: message,
+            type: 'info', // Couleur bleue/cyan pour le succès
+            action: () => setModalConfirm({ ...modalConfirm, show: false }) // Juste fermer au clic sur OK
+        });
+    };
 
   //  Récupérer les colis 
   const refreshList = async () => {
@@ -50,6 +94,29 @@ const GererColis = () => {
       setColis([]);
     }
   };
+  // Dans GererColis.jsx
+
+const openDeleteModal = (id, code) => {
+    setModalConfirm({
+        show: true,
+        title: "Supprimer le colis",
+        message: `Êtes-vous sûr de vouloir supprimer définitivement le colis #${code} ? Cette action est irréversible.`,
+        type: 'danger',
+        // On définit l'action qui sera exécutée si on clique sur "Confirmer"
+        action: () => confirmDelete(id) 
+    });
+};
+
+const confirmDelete = async (id) => {
+    try {
+        await axios.delete(`/api/colis/${id}`);
+        setModalConfirm({ ...modalConfirm, show: false }); // Fermer la modale
+        refreshList(); // Recharger le tableau
+    } catch (err) {
+        console.error("Erreur suppression:", err);
+    }
+};
+
 
   useEffect(() => {
     refreshList();
@@ -103,6 +170,7 @@ const GererColis = () => {
                 editingColis={editingColis}
                 setEditingColis={setEditingColis}
                 setShowForm={setShowForm}
+                 onSuccess={showSuccessModal} 
               />
             </div>
           )}
@@ -139,6 +207,11 @@ const GererColis = () => {
             refreshList={refreshList}
             onEdit={setEditingColis}
             setShowForm={setShowForm}
+            onDelete={openDeleteModal}
+            onViewDetails={handleViewDetails} // --- 2. PASSER LA FONCTION EN PROPS ---
+            onStatusChange={openStatusModal} // --- 3. PASSER LA FONCTION EN PROPS ---
+              onSuccess={showSuccessModal}
+           
           />
 
           {/* Info nombre de colis  */}
@@ -147,6 +220,20 @@ const GererColis = () => {
           </div>
         </main>
       </div>
+        <ConfirmModal 
+                isOpen={modalConfirm.show}
+                onClose={() => setModalConfirm({ ...modalConfirm, show: false })}
+                onConfirm={modalConfirm.action}
+                title={modalConfirm.title}
+                message={modalConfirm.message}
+                type={modalConfirm.type}
+            />
+
+      <ColisDetailsModal
+        isOpen={showDetails}
+        onClose={() => setShowDetails(false)}
+        data={selectedColis}
+      />
     </div>
   );
 };

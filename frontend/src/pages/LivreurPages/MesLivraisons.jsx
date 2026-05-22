@@ -4,7 +4,7 @@ import Sidebar from '../../components/Sidebar';
 import TopBar from '../../components/TopBar';
 import StatCard from '../../components/AdminComponent/StatCard';
 import ConfirmModal from '../../components/AdminComponent/ConfirmModal';
-import DetailsModal from '../../components/AdminComponent/DetailsModal';
+import DetailsModal from '../../components/AdminComponent/LivraisonDetailsModal';
 import MesLivraisonsTable from '../../components/LivreurComponent/MesLivraisonsTable';
 
 const MesLivraisons = () => {

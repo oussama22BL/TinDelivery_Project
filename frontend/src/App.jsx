@@ -7,6 +7,7 @@ import GererLivraisons from './pages/AdminPages/GereLivraisons';
 import MesLivraisons from './pages/LivreurPages/MesLivraisons';
 import Connexion from './pages/Connexion';
 import ClientDashboard from './pages/ClientDashboard';
+import Dashboard from './pages/AdminPages/Dashboard';
 
 function App() {
   return (

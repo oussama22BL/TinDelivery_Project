@@ -5,7 +5,7 @@ import axios from '../../api/axios';
 import StatCard from '../../components/AdminComponent/StatCard';
 import LivraisonTable from '../../components/AdminComponent/LivraisonTable';
 import ConfirmModal from '../../components/AdminComponent/ConfirmModal';
-import DetailsModal from '../../components/AdminComponent/DetailsModal';
+import DetailsModal from '../../components/AdminComponent/LivraisonDetailsModal';
 import EditLivraisonModal from '../../components/AdminComponent/EditLivraisonModal';
 
 const GereLivraisons = () => {
@@ -37,6 +37,17 @@ const GereLivraisons = () => {
     };
 
     useEffect(() => { refreshList(); }, []);
+    // Fonction pour afficher le message de blocage
+const showLockedActionMessage = (action) => {
+    setModalConfirm({
+        show: true,
+        title: "Action Verrouillée",
+        message: `Cette livraison est déjà terminée (livrée ou annulée). Il est impossible de la ${action} pour garantir l'intégrité de l'historique.`,
+        type: 'info', // Couleur bleue/info au lieu de rouge
+        action: () => setModalConfirm({ ...modalConfirm, show: false }) // Bouton OK ferme juste la modale
+    });
+};
+
 
     // --- LOGIQUE DE FILTRAGE (CORRIGÉE : EXACTEMENT COMME DANS COLIS) ---
     const filteredLivraisons = livraisons.filter(item => {
@@ -68,14 +79,27 @@ const GereLivraisons = () => {
             await axios.delete(`/api/livraisons/${id}`);
             setModalConfirm({ ...modalConfirm, show: false });
             await refreshList();
-        } catch (err) { alert("Erreur suppression"); }
+        } catch (err) {  setModalConfirm({ ...modalConfirm, show: false });
+        // On récupère le message d'Oussama ou on met le nôtre
+        const backendMsg = err.response?.data?.error || "supprimer";
+        showLockedActionMessage(backendMsg === "supprimer" ? "supprimer" : "réaliser cette action sur"); }
     };
+    // --- LOGIQUE DE MODIFICATION (GDLT-71) ---
+const handleEditRequest = (item) => {
+    // On vérifie le statut avant d'ouvrir la modale d'édition
+    if (item.statut === 'livrée' || item.statut === 'annulée') {
+        showLockedActionMessage("modifier");
+    } else {
+        setModalEdit({ show: true, data: item });
+    }
+};
 
     const handleUpdate = async (id, updatedData) => {
         try {
             await axios.patch(`/api/livraisons/${id}`, updatedData);
             setModalEdit({ show: false, data: null });
             await refreshList();
+            
         } catch (err) { alert("Erreur modification"); }
     };
 
@@ -163,6 +187,8 @@ const perfValue = calculatePerformance();
                         onDelete={(id, code) => setModalConfirm({ show: true, id, code, action: () => confirmDelete(id), title: "Supprimer", message: `Voulez-vous supprimer ${code} ?`, type: 'danger' })}
                         onViewDetails={(item) => setModalDetails({ show: true, data: item })}
                         onEdit={(item) => setModalEdit({ show: true, data: item })} 
+                        onEdit={handleEditRequest}
+                        onInfo={showLockedActionMessage}
                     />
                 </main>
             </div>

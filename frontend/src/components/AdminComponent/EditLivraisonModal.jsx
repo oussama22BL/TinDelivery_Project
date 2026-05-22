@@ -90,8 +90,8 @@ const EditLivraisonModal = ({ isOpen, onClose, deliveryData, onUpdate }) => {
                         >
                             <option value="en attente">EN ATTENTE</option>
                             <option value="en cours">EN COURS</option>
-                            <option value="livré">LIVRÉ</option>
-                            <option value="annulé">ANNULÉ</option>
+                            <option value="livrée">LIVRÉ</option>
+                            <option value="annulée">ANNULÉ</option>
                         </select>
                     </div>
 

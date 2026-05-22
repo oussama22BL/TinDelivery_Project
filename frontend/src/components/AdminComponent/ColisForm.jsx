@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../api/axios';
 
-const ColisForm = ({ refreshList, editingColis, setEditingColis, setShowForm }) => {
+const ColisForm = ({ refreshList, editingColis, setEditingColis, setShowForm, onSuccess }) => {
   const [formData, setFormData] = useState({
     poids: '',
     expediteur: { nom: '', email: '', telephone: '', adresse: '' },
@@ -47,10 +47,10 @@ const ColisForm = ({ refreshList, editingColis, setEditingColis, setShowForm }) 
       if (editingColis) {
         const id = editingColis.id || editingColis._id;
         await axios.put(`/api/colis/${id}`, payload);
-        alert(` Colis #${editingColis.code} modifié avec succès`);
+        onSuccess(` Colis #${editingColis.code} modifié avec succès`);
       } else {
         await axios.post('/api/colis', payload);
-        alert(' Colis créé avec succès');
+        onSuccess(' Colis créé avec succès');
       }
 
       refreshList();
