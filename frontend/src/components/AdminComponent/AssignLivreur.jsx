@@ -5,6 +5,7 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
   const [selectedLivreurId, setSelectedLivreurId] = useState('');
   const [livreurs, setLivreurs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // GET /api/livreurs/available - Récupérer les livreurs disponibles
   const chargerLivreurs = async () => {
@@ -42,38 +43,39 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
   // POST /api/colis/:id/assign - Assigner le colis au livreur
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg(''); // Reset de l'erreur
+
     if (!selectedLivreurId) {
-      alert('Veuillez sélectionner un livreur');
+      setErrorMsg('Veuillez sélectionner un livreur avant de valider.');
       return;
     }
 
-    if (window.confirm(`Assigner le colis #${colis?.code} à ce livreur ?`)) {
-      try {
-        await axios.post(`/api/colis/${colis.id}/assign`, {
-          idLivreur: selectedLivreurId,
-          dateEstimee: new Date().toISOString()
-        });
-        alert(` Colis #${colis?.code} assigné avec succès`);
-        onAssign(); // Rafraîchir la liste
-        onClose();  // Fermer le modal après assignation
-      } catch (error) {
-        console.error('Erreur assignation:', error);
-        alert(error.response?.data?.error || ' Erreur lors de l\'assignation');
-      }
+    // --- SUPPRESSION DU window.confirm POUR UNE UX PLUS FLUIDE ---
+    try {
+      const res = await axios.post(`/api/colis/${colis.id}/assign`, {
+        idLivreur: selectedLivreurId,
+        dateEstimee: new Date().toISOString()
+      });
+
+      // --- ON ENVOIE LE MESSAGE AU PARENT POUR AFFICHER LA POPUP PRO ---
+      onAssign(`Le colis #${colis?.code} a été assigné avec succès.`); 
+      onClose();  
+    } catch (error) {
+      setErrorMsg(error.response?.data?.error || 'Erreur lors de l\'assignation.');
     }
   };
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-          <div className="text-center py-8 text-slate-500">
-            Chargement des livreurs disponibles...
-          </div>
+      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[120]">
+        <div className="bg-white rounded-[2rem] p-10 text-center shadow-2xl">
+          <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Recherche des livreurs...</p>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -93,6 +95,11 @@ const AssignLivreur = ({ colis, onClose, onAssign }) => {
 
         {/* Formulaire */}
         <form onSubmit={handleSubmit} className="p-6">
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-amber-100 text-amber-700 rounded-lg">
+              {errorMsg}
+            </div>
+          )}
           <div className="mb-6">
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Sélectionner un livreur

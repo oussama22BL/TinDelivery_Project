@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from '../../api/axios';
 import AssignLivreur from './AssignLivreur';
 
-const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
+const ColisTable = ({ colis, refreshList, onEdit, setShowForm, onViewDetails, onDelete, onStatusChange, onSuccess}) => {
   const [menuStatutOuvert, setMenuStatutOuvert] = useState(null);
   const [showAssignPopup, setShowAssignPopup] = useState(false);
   const [selectedColisForAssign, setSelectedColisForAssign] = useState(null);
@@ -20,32 +20,22 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
   const statutsOptions = ['EN ATTENTE', 'EN COURS', 'LIVRÉ', 'ANNULÉ'];
 
   // Changer le statut
-  const handleUpdateStatut = async (id, nouveauStatut, ancienStatut) => {
-    if (window.confirm(`Changer le statut de "${ancienStatut}" vers "${nouveauStatut}" ?`)) {
-      try {
-        await axios.put(`/api/colis/${id}`, { status: nouveauStatut.toLowerCase().replace(/\s+/g, ' ') });
-        refreshList();
-      } catch (error) {
-        console.error('Erreur changement statut:', error);
-        alert(error.response?.data?.error || 'Erreur lors du changement de statut');
-      }
-    }
-    setMenuStatutOuvert(null);
-  };
+ 
 
-  // Supprimer un colis
-  const handleDelete = async (id, code) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer le colis #${code} ?`)) {
-      try {
-        await axios.delete(`/api/colis/${id}`);
-        alert(`Colis #${code} supprimé avec succès`);
-        refreshList();
-      } catch (error) {
-        console.error('Erreur suppression:', error);
-        alert(error.response?.data?.error || 'Erreur lors de la suppression');
-      }
-    }
-  };
+  // // Supprimer un colis
+  // const handleDelete = async (id, code) => {
+  //   if (window.confirm(`Êtes-vous sûr de vouloir supprimer le colis #${code} ?`)) {
+  //     try {
+  //       await axios.delete(`/api/colis/${id}`);
+  //       alert(`Colis #${code} supprimé avec succès`);
+  //       refreshList();
+  //     } catch (error) {
+  //       console.error('Erreur suppression:', error);
+  //       alert(error.response?.data?.error || 'Erreur lors de la suppression');
+  //     }
+  //   }
+  // };
+
   const handleOpenAssignPopup = (colis) => {
     setSelectedColisForAssign(colis);
     setShowAssignPopup(true);
@@ -95,13 +85,17 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
                   {menuStatutOuvert === (colis.id || colis._id) && (
                     <div className="absolute z-10 mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-lg">
                       {statutsOptions.map((statut) => (
-                        <button
-                          key={statut}
-                          onClick={() => handleUpdateStatut(colis.id, statut, colis.statut)}
-                          className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 first:rounded-t-lg last:rounded-b-lg"
-                        >
-                          {statut}
-                        </button>
+                <button
+                  key={statut}
+                  // ON APPELLE LA FONCTION DU PARENT QUI OUVRE LA POPUP
+                  onClick={() => {
+                    onStatusChange(colis.id, statut, colis.statut);
+                    setMenuStatutOuvert(null);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  {statut}
+                </button>
                       ))}
                     </div>
                   )}
@@ -119,7 +113,7 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
                       <i className="bi bi-pencil-square"></i>
                     </button>
                     <button
-                      onClick={() => handleDelete(colis.id, colis.code)}
+                      onClick={() => onDelete(colis.id, colis.code)}
                       className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Supprimer"
                     >
@@ -139,28 +133,7 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
 </button>
                     <button
                       onClick={() => {
-                        alert(`Détails du colis ${colis.code}\n\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                          ` Informations générales\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                          `Poids: ${colis.poids} kg\n` +
-                          `Statut: ${colis.statut}\n` +
-                          `Date création: ${colis.dateCreation}\n\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                          ` EXPÉDITEUR\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                          `Nom: ${colis.expediteur?.nom}\n` +
-                          `Email: ${colis.expediteur?.email}\n` +
-                          `Tél: ${colis.expediteur?.telephone}\n` +
-                          `Adresse: ${colis.expediteur?.adresse}\n\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                          ` DESTINATAIRE\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                          `Nom: ${colis.destinataire?.nom}\n` +
-                          `Email: ${colis.destinataire?.email}\n` +
-                          `Tél: ${colis.destinataire?.telephone}\n` +
-                          `Adresse: ${colis.destinataire?.adresse}`
-                        );
+                        onViewDetails(colis);
                       }}
                       className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                       title="Détails"
@@ -186,10 +159,12 @@ const ColisTable = ({ colis, refreshList, onEdit, setShowForm }) => {
         <AssignLivreur
           colis={selectedColisForAssign}
           onClose={() => setShowAssignPopup(false)}
-          onAssign={() => {
+          onAssign={(message) => {
             setShowAssignPopup(false);
             refreshList();
+            onSuccess(message|| "Livreur a été assigné avec succès");
           }}
+
         />
       )}
     </div>
